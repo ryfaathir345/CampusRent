@@ -16,9 +16,15 @@ const getWalletInfo = asyncHandler(async (req, res) => {
     orderBy: { createdAt: 'desc' }
   });
 
+  const topUps = await prisma.topUp.findMany({
+    where: { userId: req.user.id },
+    orderBy: { createdAt: 'desc' }
+  });
+
   return successResponse(res, 200, 'Berhasil memuat info dompet', {
     saldo: user.saldo,
-    withdrawals
+    withdrawals,
+    topUps
   });
 });
 
@@ -124,9 +130,103 @@ const processWithdrawal = asyncHandler(async (req, res) => {
   return errorResponse(res, 400, 'Action tidak valid');
 });
 
+// POST /api/wallet/topup
+// Request Top Up Saldo
+const requestTopUp = asyncHandler(async (req, res) => {
+  const { amount } = req.body;
+  const numAmount = parseInt(amount);
+
+  if (!numAmount || numAmount < 10000) {
+    return errorResponse(res, 400, 'Minimal top up adalah Rp 10.000');
+  }
+
+  if (!req.file) {
+    return errorResponse(res, 400, 'Bukti transfer wajib diunggah');
+  }
+
+  const topUp = await prisma.topUp.create({
+    data: {
+      userId: req.user.id,
+      amount: numAmount,
+      buktiUrl: `/uploads/${req.file.filename}`,
+      status: 'PENDING'
+    }
+  });
+
+  return successResponse(res, 201, 'Permintaan top up berhasil dibuat, menunggu verifikasi Admin', topUp);
+});
+
+// GET /api/admin/topups
+// Ambil semua request Top Up (oleh admin)
+const getPendingTopUps = asyncHandler(async (req, res) => {
+  const topUps = await prisma.topUp.findMany({
+    where: { status: 'PENDING' },
+    include: {
+      user: { select: { nama: true, email: true, whatsapp: true } }
+    },
+    orderBy: { createdAt: 'desc' }
+  });
+
+  return successResponse(res, 200, 'Berhasil memuat daftar top up', topUps);
+});
+
+// PATCH /api/admin/topups/:id
+// Proses Top Up (oleh admin)
+const processTopUp = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { action } = req.body; // 'approve' or 'reject'
+
+  const topUp = await prisma.topUp.findUnique({ where: { id } });
+  if (!topUp) return errorResponse(res, 404, 'Top Up tidak ditemukan');
+  if (topUp.status !== 'PENDING') return errorResponse(res, 400, 'Top Up sudah diproses');
+
+  if (action === 'approve') {
+    await prisma.$transaction([
+      prisma.topUp.update({
+        where: { id },
+        data: { status: 'APPROVED' }
+      }),
+      prisma.user.update({
+        where: { id: topUp.userId },
+        data: { saldo: { increment: topUp.amount } }
+      }),
+      prisma.notification.create({
+        data: {
+          userId: topUp.userId,
+          title: 'Top Up Berhasil',
+          message: `Top Up saldo sebesar Rp ${topUp.amount.toLocaleString('id-ID')} telah disetujui dan ditambahkan ke dompet Anda.`
+        }
+      })
+    ]);
+
+    return successResponse(res, 200, 'Top up berhasil disetujui');
+  } else if (action === 'reject') {
+    await prisma.$transaction([
+      prisma.topUp.update({
+        where: { id },
+        data: { status: 'REJECTED' }
+      }),
+      prisma.notification.create({
+        data: {
+          userId: topUp.userId,
+          title: 'Top Up Ditolak',
+          message: `Top Up saldo sebesar Rp ${topUp.amount.toLocaleString('id-ID')} ditolak. Silakan periksa kembali bukti transfer Anda.`
+        }
+      })
+    ]);
+
+    return successResponse(res, 200, 'Top up ditolak');
+  }
+
+  return errorResponse(res, 400, 'Action tidak valid');
+});
+
 module.exports = {
   getWalletInfo,
   requestWithdrawal,
   getPendingWithdrawals,
-  processWithdrawal
+  processWithdrawal,
+  requestTopUp,
+  getPendingTopUps,
+  processTopUp
 };

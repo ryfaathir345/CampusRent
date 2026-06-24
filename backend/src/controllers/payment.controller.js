@@ -121,8 +121,8 @@ const getAdminRevenue = asyncHandler(async (req, res) => {
   const dailyData = {};
 
   completedTransactions.forEach(tx => {
-    // Admin mendapat 10% dari totalPrice
-    const adminFee = Math.floor(tx.totalPrice * 0.1);
+    // Biaya admin tetap Rp5.000 per transaksi
+    const adminFee = 5000;
     totalRevenue += adminFee;
 
     // Format tanggal ke YYYY-MM-DD

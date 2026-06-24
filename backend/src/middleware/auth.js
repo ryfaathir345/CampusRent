@@ -42,6 +42,19 @@ const protect = async (req, res, next) => {
       return errorResponse(res, 401, 'Akun tidak ditemukan. Silakan login ulang.');
     }
 
+    // Update lastActiveAt jika sudah lebih dari 5 menit untuk mengurangi beban database
+    const now = new Date();
+    const lastActive = new Date(user.lastActiveAt);
+    const diffMinutes = Math.floor((now - lastActive) / 1000 / 60);
+    
+    if (diffMinutes > 5) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { lastActiveAt: now }
+      });
+      user.lastActiveAt = now;
+    }
+
     req.user = user;
     next();
   } catch (error) {

@@ -1,6 +1,7 @@
 // src/pages/Chat.jsx
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Send, User, Package, MessageSquare, ImagePlus, MapPin, ExternalLink, ChevronDown } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import chatService from '../services/chat.service';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
@@ -10,10 +11,11 @@ const UPLOADS_URL = API_URL.replace('/api', '');
 
 const Chat = () => {
   const { user } = useAuth();
+  const location = useLocation();
   const [conversations, setConversations] = useState([]);
   const [activeTab, setActiveTab] = useState('active'); // 'active' or 'archived'
-  const [activePartnerId, setActivePartnerId] = useState(null);
-  const [activeTxId, setActiveTxId] = useState(null);
+  const [activePartnerId, setActivePartnerId] = useState(location.state?.selectedUser?.id || null);
+  const [activeTxId, setActiveTxId] = useState(location.state?.activeTxId || null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -21,9 +23,9 @@ const Chat = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   
-  const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
   const dropdownRef = useRef(null);
+  const chatContainerRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -92,7 +94,12 @@ const Chat = () => {
 
   // Auto scroll to bottom
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTo({
+        top: chatContainerRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
   };
 
   useEffect(() => {
@@ -105,6 +112,14 @@ const Chat = () => {
       try {
         const res = await chatService.getConversations();
         setConversations(res.data);
+        
+        // Handle incoming state navigation
+        if (location.state?.selectedUser) {
+          setActivePartnerId(location.state.selectedUser.id);
+          if (location.state.activeTxId) {
+            setActiveTxId(location.state.activeTxId);
+          }
+        }
       } catch (err) {
         toast.error('Gagal memuat daftar obrolan');
       } finally {
@@ -112,7 +127,7 @@ const Chat = () => {
       }
     };
     fetchConversations();
-  }, []);
+  }, [location.state]);
 
   // Poll messages for active transaction
   useEffect(() => {
@@ -299,7 +314,7 @@ const Chat = () => {
                         className={`w-full text-left px-4 py-2.5 text-sm transition-all flex flex-col border-l-2 ${activeTxId === c.transactionId ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-blue-500' : 'text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700/50 border-transparent'}`}
                       >
                         <span className="font-bold truncate">{c.item.namaBarang}</span>
-                        <span className={`text-[10px] uppercase tracking-wider font-semibold mt-0.5 ${c.status === 'COMPLETED' || c.status === 'REJECTED' || c.status === 'CANCELLED' ? 'text-gray-400 dark:text-slate-500' : 'text-blue-500 dark:text-blue-400'}`}>{c.status}</span>
+                        <span className={`text-[10px] uppercase tracking-wider font-semibold mt-0.5 ${c.status === 'COMPLETED' || c.status === 'REJECTED' || c.status === 'CANCELLED' ? 'text-gray-400 dark:text-slate-500' : (c.status === 'INQUIRY' ? 'text-purple-500 dark:text-purple-400' : 'text-blue-500 dark:text-blue-400')}`}>{c.status === 'INQUIRY' ? 'Tanya-Tanya' : c.status}</span>
                       </button>
                     ))}
                   </div>
@@ -307,13 +322,13 @@ const Chat = () => {
               </div>
             </div>
           </div>
-          <span className={`px-2.5 py-1 text-xs font-bold rounded-lg ml-4 whitespace-nowrap ${isTxInactive ? 'bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-slate-300' : 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'}`}>
-            {activeTx.status}
+          <span className={`px-2.5 py-1 text-xs font-bold rounded-lg ml-4 whitespace-nowrap ${isTxInactive ? 'bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-slate-300' : (activeTx.status === 'INQUIRY' ? 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400' : 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400')}`}>
+            {activeTx.status === 'INQUIRY' ? 'Tanya-Tanya' : activeTx.status}
           </span>
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-6 bg-gray-50 dark:bg-slate-900 space-y-4">
+        <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-6 bg-gray-50 dark:bg-slate-900 space-y-4">
           {messages.length === 0 ? (
             <div className="text-center text-gray-400 dark:text-slate-500 mt-10 text-sm">
               Belum ada pesan. Mulai sapa {activeTx.partner.nama}!
@@ -367,7 +382,6 @@ const Chat = () => {
               );
             })
           )}
-          <div ref={messagesEndRef} />
         </div>
 
         {/* Input */}

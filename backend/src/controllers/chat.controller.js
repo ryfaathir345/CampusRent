@@ -41,7 +41,7 @@ const getConversations = asyncHandler(async (req, res) => {
     orderBy: { updatedAt: 'desc' }
   });
 
-  const validStatuses = ['APPROVED', 'BORROWED', 'RETURNED', 'COMPLETED'];
+  const validStatuses = ['INQUIRY', 'APPROVED', 'BORROWED', 'RETURNED', 'COMPLETED'];
   
   // Memastikan percakapan diinisialisasi jika belum ada
   const formatted = transactions
@@ -77,9 +77,9 @@ const getMessages = asyncHandler(async (req, res) => {
   if (!transaction) return errorResponse(res, 404, 'Transaksi tidak ditemukan');
   if (!checkParticipant(transaction, userId)) return errorResponse(res, 403, 'Akses ditolak');
 
-  const validStatuses = ['APPROVED', 'BORROWED', 'RETURNED', 'COMPLETED'];
+  const validStatuses = ['INQUIRY', 'APPROVED', 'BORROWED', 'RETURNED', 'COMPLETED'];
   if (!validStatuses.includes(transaction.status)) {
-    return errorResponse(res, 403, 'Chat hanya tersedia setelah transaksi disetujui');
+    return errorResponse(res, 403, 'Chat hanya tersedia untuk transaksi inquiry atau setelah disetujui');
   }
 
   let conversation = transaction.conversation;
@@ -115,9 +115,9 @@ const sendMessage = asyncHandler(async (req, res) => {
   if (!transaction) return errorResponse(res, 404, 'Transaksi tidak ditemukan');
   if (!checkParticipant(transaction, userId)) return errorResponse(res, 403, 'Akses ditolak');
 
-  const validStatuses = ['APPROVED', 'BORROWED', 'RETURNED', 'COMPLETED'];
+  const validStatuses = ['INQUIRY', 'APPROVED', 'BORROWED', 'RETURNED', 'COMPLETED'];
   if (!validStatuses.includes(transaction.status)) {
-    return errorResponse(res, 403, 'Chat hanya tersedia setelah transaksi disetujui');
+    return errorResponse(res, 403, 'Chat hanya tersedia untuk transaksi inquiry atau setelah disetujui');
   }
 
   let conversation = transaction.conversation;

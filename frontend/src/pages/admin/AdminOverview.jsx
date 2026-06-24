@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import adminService from '../../services/admin.service';
 
 const AdminOverview = () => {
-  const [stats, setStats] = useState({ totalUsers: 0, totalItems: 0, activeTransactions: 0 });
+  const [stats, setStats] = useState({ totalUsers: 0, onlineUsers: 0, totalItems: 0, activeTransactions: 0, totalRevenue: 0, averageSpending: 0 });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -36,14 +36,16 @@ const AdminOverview = () => {
       </div>
 
       {/* Stat Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-gutter mb-stack-lg">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-gutter mb-stack-lg">
         {/* Card 1: Total Students */}
         <div className="bg-white p-6 rounded-xl border border-outline-variant shadow-[0_1px_3px_0_rgba(0,0,0,0.1)] hover:shadow-lg transition-all group">
           <div className="flex justify-between items-start mb-4">
             <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
               <span className="material-symbols-outlined text-[28px]">group</span>
             </div>
-            <span className="text-tertiary font-label-sm bg-tertiary-fixed-dim/20 px-2 py-1 rounded">Active</span>
+            <span className="text-tertiary font-label-sm bg-tertiary-fixed-dim/20 px-2 py-1 rounded flex items-center gap-1">
+              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> {stats.onlineUsers} Online
+            </span>
           </div>
           <h3 className="font-body-md text-body-md text-on-surface-variant">Total Students</h3>
           <p className="font-display-lg text-display-lg text-on-surface mt-1">{stats.totalUsers}</p>
@@ -71,6 +73,34 @@ const AdminOverview = () => {
           </div>
           <h3 className="font-body-md text-body-md text-on-surface-variant">Active Transactions</h3>
           <p className="font-display-lg text-display-lg text-on-surface mt-1">{stats.activeTransactions}</p>
+        </div>
+
+        {/* Card 4: Average Spending */}
+        <div className="bg-white p-6 rounded-xl border border-outline-variant shadow-[0_1px_3px_0_rgba(0,0,0,0.1)] hover:shadow-lg transition-all group">
+          <div className="flex justify-between items-start mb-4">
+            <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+              <span className="material-symbols-outlined text-[28px]">trending_up</span>
+            </div>
+            <span className="text-primary font-label-sm bg-primary-fixed/30 px-2 py-1 rounded">Rata-Rata</span>
+          </div>
+          <h3 className="font-body-md text-body-md text-on-surface-variant">Pengeluaran Penyewa</h3>
+          <p className="font-display-sm text-display-sm text-on-surface mt-1 truncate" title={`Rp ${stats.averageSpending.toLocaleString('id-ID')}`}>
+            Rp {stats.averageSpending.toLocaleString('id-ID')}
+          </p>
+        </div>
+
+        {/* Card 5: Total Revenue */}
+        <div className="bg-white p-6 rounded-xl border border-outline-variant shadow-[0_1px_3px_0_rgba(0,0,0,0.1)] hover:shadow-lg transition-all group">
+          <div className="flex justify-between items-start mb-4">
+            <div className="w-12 h-12 bg-tertiary/10 rounded-lg flex items-center justify-center text-tertiary group-hover:bg-tertiary group-hover:text-white transition-colors">
+              <span className="material-symbols-outlined text-[28px]">account_balance_wallet</span>
+            </div>
+            <span className="text-tertiary font-label-sm bg-tertiary-fixed-dim/20 px-2 py-1 rounded">Laba</span>
+          </div>
+          <h3 className="font-body-md text-body-md text-on-surface-variant">Laba Platform</h3>
+          <p className="font-display-sm text-display-sm text-on-surface mt-1 truncate" title={`Rp ${stats.totalRevenue.toLocaleString('id-ID')}`}>
+            Rp {stats.totalRevenue.toLocaleString('id-ID')}
+          </p>
         </div>
       </div>
 

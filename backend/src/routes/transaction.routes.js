@@ -4,6 +4,7 @@ const router = express.Router();
 const { protect } = require('../middleware/auth');
 const {
   createRequest,
+  createInquiry,
   getMyBorrowings,
   getMyItemRequests,
   updateRequestStatus,
@@ -18,6 +19,7 @@ router.use(protect);
 
 router.get('/stats', getDashboardStats);
 router.post('/', createRequest);
+router.post('/inquiry', createInquiry);
 router.get('/borrowings', getMyBorrowings);
 router.get('/requests', getMyItemRequests);
 router.patch('/:id/status', updateRequestStatus);

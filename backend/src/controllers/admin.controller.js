@@ -5,16 +5,42 @@ const { asyncHandler } = require('../middleware/errorHandler');
 
 // GET /api/admin/stats
 const getDashboardStats = asyncHandler(async (req, res) => {
-  const [totalUsers, totalItems, activeTransactions] = await Promise.all([
+  // Hitung user online (aktif dalam 15 menit terakhir)
+  const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+  
+  const [totalUsers, totalItems, activeTransactions, onlineUsers] = await Promise.all([
     prisma.user.count({ where: { role: 'MAHASISWA' } }),
     prisma.item.count(),
-    prisma.transaction.count({ where: { status: { in: ['BORROWED', 'APPROVED'] } } })
+    prisma.transaction.count({ where: { status: { in: ['BORROWED', 'APPROVED'] } } }),
+    prisma.user.count({ where: { role: 'MAHASISWA', lastActiveAt: { gte: fifteenMinutesAgo } } })
   ]);
+
+  // Hitung total revenue dan average spending dari transaksi COMPLETED
+  const completedTransactions = await prisma.transaction.findMany({
+    where: { status: 'COMPLETED' },
+    select: { totalPrice: true }
+  });
+
+  let totalRevenue = 0;
+  let totalSpending = 0;
+
+  completedTransactions.forEach(tx => {
+    // Biaya admin tetap Rp5.000 per transaksi
+    totalRevenue += 5000;
+    totalSpending += tx.totalPrice;
+  });
+
+  const averageSpending = completedTransactions.length > 0 
+    ? Math.floor(totalSpending / completedTransactions.length) 
+    : 0;
 
   return successResponse(res, 200, 'Berhasil memuat statistik admin', {
     totalUsers,
+    onlineUsers,
     totalItems,
-    activeTransactions
+    activeTransactions,
+    totalRevenue,
+    averageSpending
   });
 });
 

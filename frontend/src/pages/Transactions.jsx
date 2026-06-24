@@ -671,7 +671,7 @@ const Transactions = () => {
             
             <div className="bg-blue-50 rounded-xl p-4 mb-6 border border-blue-100">
               <p className="text-sm text-blue-800 font-medium mb-1">Transfer ke Rekening Bersama:</p>
-              <p className="text-lg font-bold text-blue-900 tracking-wider">BCA - 1234567890</p>
+              <p className="text-lg font-bold text-blue-900 tracking-wider">BCA - 6005050450</p>
               <p className="text-sm text-blue-700">a.n Admin CampusRent</p>
             </div>
 

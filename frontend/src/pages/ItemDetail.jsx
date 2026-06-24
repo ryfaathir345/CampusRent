@@ -80,22 +80,20 @@ const ItemDetail = () => {
 
   const isOwner = user && user.id === item.ownerId;
 
-  const handleContact = () => {
+  const handleContact = async () => {
     if (!isAuthenticated) {
       toast.error('Silakan login terlebih dahulu');
       navigate('/login', { state: { from: { pathname: `/items/${id}` } } });
       return;
     }
-    
-    if (item.owner.whatsapp) {
-      let wa = item.owner.whatsapp;
-      if (wa.startsWith('0')) wa = '62' + wa.substring(1);
-      if (wa.startsWith('+62')) wa = '62' + wa.substring(3);
-      
-      const message = `Halo ${item.owner.nama.split(' ')[0]}, saya tertarik meminjam barang "${item.namaBarang}" yang Anda sewakan di CampusRent.`;
-      window.open(`https://wa.me/${wa}?text=${encodeURIComponent(message)}`, '_blank');
-    } else {
-      toast.error('Pemilik tidak menyertakan nomor WhatsApp');
+
+    try {
+      toast.loading('Membuka obrolan...', { id: 'chat' });
+      const res = await transactionService.createInquiry({ itemId: id });
+      toast.dismiss('chat');
+      navigate('/chat', { state: { selectedUser: item.owner, activeTxId: res.data.id } });
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Gagal memulai obrolan', { id: 'chat' });
     }
   };
 

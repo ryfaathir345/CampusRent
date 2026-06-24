@@ -32,6 +32,7 @@ model User {
   saldo       Int      @default(0)
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
+  lastActiveAt DateTime @default(now()) @map("last_active_at")
 
   // Relations
   items         Item[]
@@ -46,6 +47,7 @@ model User {
   reportsGot    Report[]       @relation("Reported")
   payments      Payment[]
   withdrawals   Withdrawal[]
+  topUps        TopUp[]
 
   @@map("users")
 }
@@ -95,6 +97,7 @@ model Item {
 }
 
 enum TransactionStatus {
+  INQUIRY
   PENDING
   APPROVED
   REJECTED
@@ -284,6 +287,26 @@ model Withdrawal {
   user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("withdrawals")
+}
+
+enum TopUpStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model TopUp {
+  id            String       @id @default(uuid())
+  userId        String       @map("user_id")
+  amount        Int
+  buktiUrl      String       @map("bukti_url")
+  status        TopUpStatus  @default(PENDING)
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("topups")
 }
 
 enum ExtensionStatus {

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import * as paymentService from '../../services/payment.service';
 import * as walletService from '../../services/wallet.service';
 import toast from 'react-hot-toast';
@@ -15,7 +16,9 @@ const AdminFinance = () => {
   
   const [payments, setPayments] = useState([]);
   const [withdrawals, setWithdrawals] = useState([]);
+  const [topUps, setTopUps] = useState([]);
   const [revenue, setRevenue] = useState({ totalRevenue: 0, chartData: [] });
+  const [imageModal, setImageModal] = useState({ isOpen: false, url: '' });
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -29,6 +32,9 @@ const AdminFinance = () => {
       } else if (activeTab === 'withdrawals') {
         const wdRes = await walletService.getPendingWithdrawals();
         setWithdrawals(wdRes.data);
+      } else if (activeTab === 'topups') {
+        const tuRes = await walletService.getPendingTopUps();
+        setTopUps(tuRes.data);
       }
     } catch (err) {
       toast.error('Gagal memuat data keuangan');
@@ -60,6 +66,17 @@ const AdminFinance = () => {
       fetchData();
     } catch (error) {
       toast.error(error.response?.data?.message || 'Gagal memproses penarikan', { id: 'processWd' });
+    }
+  };
+
+  const handleProcessTopUp = async (id, action) => {
+    try {
+      toast.loading('Memproses top up...', { id: 'processTu' });
+      await walletService.processTopUp(id, action);
+      toast.success(action === 'approve' ? 'Top up disetujui' : 'Top up ditolak', { id: 'processTu' });
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Gagal memproses top up', { id: 'processTu' });
     }
   };
 
@@ -137,6 +154,13 @@ const AdminFinance = () => {
         >
           Withdrawal Requests
           {activeTab === 'withdrawals' && <span className="absolute bottom-[-1px] left-0 w-full h-[2px] bg-primary"></span>}
+        </button>
+        <button 
+          onClick={() => setActiveTab('topups')}
+          className={`px-8 py-4 font-label-md transition-all whitespace-nowrap relative ${activeTab === 'topups' ? 'text-primary' : 'text-on-surface-variant hover:text-primary'}`}
+        >
+          Top Up Verification
+          {activeTab === 'topups' && <span className="absolute bottom-[-1px] left-0 w-full h-[2px] bg-primary"></span>}
         </button>
       </div>
 
@@ -240,9 +264,9 @@ const AdminFinance = () => {
                         </td>
                         <td className="px-gutter py-4">
                           {p.proofOfPayment ? (
-                            <a href={`${UPLOADS_URL}${p.proofOfPayment}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-label-sm flex items-center gap-1">
+                            <button onClick={() => setImageModal({ isOpen: true, url: `${UPLOADS_URL}${p.proofOfPayment}` })} className="text-primary hover:underline font-label-sm flex items-center gap-1">
                               <span className="material-symbols-outlined text-[16px]">receipt</span> Lihat Bukti
-                            </a>
+                            </button>
                           ) : (
                             <span className="text-on-surface-variant italic font-label-sm">Tidak ada bukti</span>
                           )}
@@ -310,7 +334,89 @@ const AdminFinance = () => {
               </div>
             </div>
           )}
+
+          {/* Top Up Requests Tab */}
+          {activeTab === 'topups' && (
+            <div className="bg-white rounded-xl shadow-sm border border-outline-variant overflow-hidden">
+              <div className="p-gutter border-b border-outline-variant">
+                <h4 className="font-headline-sm text-headline-sm text-on-surface">Menunggu Verifikasi Top Up Saldo</h4>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead className="bg-surface-container-low text-label-sm text-on-surface-variant uppercase tracking-wider">
+                    <tr>
+                      <th className="px-gutter py-4 font-bold">Pengguna</th>
+                      <th className="px-gutter py-4 font-bold">Jumlah</th>
+                      <th className="px-gutter py-4 font-bold">Bukti Transfer</th>
+                      <th className="px-gutter py-4 font-bold">Tanggal Request</th>
+                      <th className="px-gutter py-4 font-bold text-right">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-outline-variant">
+                    {topUps.length === 0 ? (
+                      <tr>
+                        <td colSpan="5" className="px-gutter py-8 text-center text-on-surface-variant">Tidak ada permintaan top up saldo.</td>
+                      </tr>
+                    ) : topUps.map(t => (
+                      <tr key={t.id} className="hover:bg-surface transition-colors">
+                        <td className="px-gutter py-4">
+                          <p className="font-body-md font-bold text-on-surface">{t.user.nama}</p>
+                          <p className="font-label-sm text-on-surface-variant text-xs">{t.user.email}</p>
+                        </td>
+                        <td className="px-gutter py-4 font-bold text-on-surface text-green-600">+ Rp {t.amount.toLocaleString('id-ID')}</td>
+                        <td className="px-gutter py-4">
+                          {t.buktiUrl ? (
+                            <button onClick={() => setImageModal({ isOpen: true, url: `${UPLOADS_URL}${t.buktiUrl}` })} className="text-primary hover:underline font-label-sm flex items-center gap-1">
+                              <span className="material-symbols-outlined text-[16px]">receipt</span> Lihat Bukti
+                            </button>
+                          ) : (
+                            <span className="text-on-surface-variant italic font-label-sm">Tidak ada bukti</span>
+                          )}
+                        </td>
+                        <td className="px-gutter py-4 text-body-md text-on-surface-variant">
+                          {new Date(t.createdAt).toLocaleDateString('id-ID')}
+                        </td>
+                        <td className="px-gutter py-4 text-right">
+                          <div className="flex justify-end gap-2">
+                            <button onClick={() => handleProcessTopUp(t.id, 'approve')} className="px-4 py-1.5 bg-tertiary text-white rounded-full font-label-sm hover:bg-tertiary-container transition-colors shadow-sm">Setujui</button>
+                            <button onClick={() => handleProcessTopUp(t.id, 'reject')} className="px-4 py-1.5 bg-error text-white rounded-full font-label-sm hover:bg-error-container transition-colors shadow-sm">Tolak</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </>
+      )}
+
+      {/* Image View Modal */}
+      {imageModal.isOpen && createPortal(
+        <div 
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[99999] flex items-center justify-center p-4"
+          onClick={() => setImageModal({ isOpen: false, url: '' })}
+        >
+          <div 
+            className="bg-surface rounded-2xl max-w-2xl w-full overflow-hidden shadow-2xl relative flex flex-col max-h-[90vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center p-4 border-b border-outline-variant bg-surface-container-low shrink-0">
+              <h3 className="font-headline-sm text-on-surface">Bukti Transfer</h3>
+              <button 
+                onClick={() => setImageModal({ isOpen: false, url: '' })} 
+                className="p-2 hover:bg-surface-container rounded-full text-on-surface-variant transition-colors cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[24px] block">close</span>
+              </button>
+            </div>
+            <div className="p-4 flex-1 min-h-0 flex items-center justify-center bg-surface-container-lowest overflow-auto">
+              <img src={imageModal.url} alt="Bukti Transfer" className="max-w-full h-auto rounded-lg object-contain" />
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );

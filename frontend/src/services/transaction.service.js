@@ -9,6 +9,12 @@ const transactionService = {
     return response.data;
   },
 
+  // Mengajukan pertanyaan terkait barang
+  createInquiry: async (data) => {
+    const response = await api.post('/transactions/inquiry', data);
+    return response.data;
+  },
+
   // Mendapatkan statistik untuk Dashboard
   getDashboardStats: async () => {
     const response = await api.get('/transactions/stats');

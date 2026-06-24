@@ -40,16 +40,36 @@ const createRequest = asyncHandler(async (req, res) => {
   const adminFee = 5000;
   const totalPrice = basePrice + adminFee;
 
-  const transaction = await prisma.transaction.create({
-    data: {
-      itemId,
-      borrowerId,
-      startDate: start,
-      endDate: end,
-      totalPrice,
-      status: 'PENDING'
-    }
+  // Cek apakah sebelumnya ada INQUIRY untuk item ini
+  const existingInquiry = await prisma.transaction.findFirst({
+    where: { itemId, borrowerId, status: 'INQUIRY' }
   });
+
+  let transaction;
+  if (existingInquiry) {
+    // Upgrade INQUIRY menjadi PENDING
+    transaction = await prisma.transaction.update({
+      where: { id: existingInquiry.id },
+      data: {
+        startDate: start,
+        endDate: end,
+        totalPrice,
+        status: 'PENDING'
+      }
+    });
+  } else {
+    // Buat baru jika belum ada
+    transaction = await prisma.transaction.create({
+      data: {
+        itemId,
+        borrowerId,
+        startDate: start,
+        endDate: end,
+        totalPrice,
+        status: 'PENDING'
+      }
+    });
+  }
 
   // Notifikasi ke owner
   await prisma.notification.create({
@@ -63,11 +83,48 @@ const createRequest = asyncHandler(async (req, res) => {
   return successResponse(res, 201, 'Pengajuan pinjaman berhasil dibuat', transaction);
 });
 
+// POST /api/transactions/inquiry
+// Membuat atau mendapatkan chat tanya-tanya sebelum meminjam
+const createInquiry = asyncHandler(async (req, res) => {
+  const { itemId } = req.body;
+  const borrowerId = req.user.id;
+
+  const item = await prisma.item.findUnique({ where: { id: itemId } });
+  if (!item) return errorResponse(res, 404, 'Barang tidak ditemukan');
+
+  if (item.ownerId === borrowerId) {
+    return errorResponse(res, 400, 'Anda tidak bisa membuat inquiry pada barang sendiri');
+  }
+
+  let transaction = await prisma.transaction.findFirst({
+    where: { itemId, borrowerId, status: 'INQUIRY' }
+  });
+
+  if (!transaction) {
+    // Buat dummy transaksi berstatus INQUIRY agar sistem chat bisa berjalan
+    transaction = await prisma.transaction.create({
+      data: {
+        itemId,
+        borrowerId,
+        startDate: new Date(),
+        endDate: new Date(),
+        totalPrice: 0,
+        status: 'INQUIRY'
+      }
+    });
+  }
+
+  return successResponse(res, 201, 'Inquiry chat siap', transaction);
+});
+
 // GET /api/transactions/borrowings
 // Peminjaman saya (sebagai peminjam)
 const getMyBorrowings = asyncHandler(async (req, res) => {
   const transactions = await prisma.transaction.findMany({
-    where: { borrowerId: req.user.id },
+    where: { 
+      borrowerId: req.user.id,
+      status: { not: 'INQUIRY' }
+    },
     orderBy: { createdAt: 'desc' },
     include: {
       borrower: {
@@ -92,7 +149,8 @@ const getMyBorrowings = asyncHandler(async (req, res) => {
 const getMyItemRequests = asyncHandler(async (req, res) => {
   const transactions = await prisma.transaction.findMany({
     where: {
-      item: { ownerId: req.user.id }
+      item: { ownerId: req.user.id },
+      status: { not: 'INQUIRY' }
     },
     orderBy: { createdAt: 'desc' },
     include: {
@@ -306,6 +364,13 @@ const requestExtension = asyncHandler(async (req, res) => {
     return errorResponse(res, 400, 'Anda masih memiliki pengajuan perpanjangan yang belum direspon');
   }
 
+  // Cek apakah saldo cukup untuk membayar biaya perpanjangan
+  const additionalPrice = parseInt(days) * transaction.item.hargaSewa;
+  const borrower = await prisma.user.findUnique({ where: { id: req.user.id } });
+  if (borrower.saldo < additionalPrice) {
+    return errorResponse(res, 400, `Saldo CampusRent Anda tidak cukup untuk perpanjangan ini (Butuh Rp${additionalPrice}). Silakan Top Up terlebih dahulu.`);
+  }
+
   const extension = await prisma.extensionRequest.create({
     data: {
       transactionId: id,
@@ -366,17 +431,31 @@ const respondExtension = asyncHandler(async (req, res) => {
     const newEndDate = new Date(currentEndDate.setDate(currentEndDate.getDate() + extension.days));
     
     const additionalPrice = extension.days * transaction.item.hargaSewa;
+    
+    // Pastikan saldo peminjam masih cukup (berjaga-jaga jika terpakai untuk hal lain)
+    const borrower = await prisma.user.findUnique({ where: { id: transaction.borrowerId } });
+    if (borrower.saldo < additionalPrice) {
+      return errorResponse(res, 400, 'Gagal menyetujui: Saldo peminjam saat ini tidak mencukupi untuk membayar perpanjangan ini.');
+    }
+
     const newTotalPrice = transaction.totalPrice + additionalPrice;
 
-    await prisma.transaction.update({
-      where: { id },
-      data: {
-        endDate: newEndDate,
-        totalPrice: newTotalPrice
-      }
-    });
+    // Lakukan secara atomik: potong saldo peminjam dan update transaksi
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: transaction.borrowerId },
+        data: { saldo: { decrement: additionalPrice } }
+      }),
+      prisma.transaction.update({
+        where: { id },
+        data: {
+          endDate: newEndDate,
+          totalPrice: newTotalPrice
+        }
+      })
+    ]);
 
-    notifMessage = `Pengajuan perpanjangan waktu untuk barang ${transaction.item.namaBarang} telah DISETUJUI. Tenggat waktu bertambah ${extension.days} hari.`;
+    notifMessage = `Pengajuan perpanjangan waktu untuk barang ${transaction.item.namaBarang} telah DISETUJUI. Saldo Anda telah dipotong Rp${additionalPrice} dan tenggat waktu bertambah ${extension.days} hari.`;
   }
 
   // Notifikasi ke borrower
@@ -517,6 +596,7 @@ const payPenalty = asyncHandler(async (req, res) => {
 
 module.exports = {
   createRequest,
+  createInquiry,
   getMyBorrowings,
   getMyItemRequests,
   updateRequestStatus,

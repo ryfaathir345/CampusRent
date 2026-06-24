@@ -255,7 +255,31 @@ const App = () => {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <Toaster position="top-center" />
+        <Toaster 
+          position="top-center" 
+          toastOptions={{
+            duration: 3500,
+            style: {
+              borderRadius: '12px',
+              fontSize: '14px',
+              fontWeight: 500,
+            },
+            success: {
+              style: {
+                background: '#f0fdf4',
+                color: '#166534',
+                border: '1px solid #bbf7d0',
+              },
+            },
+            error: {
+              style: {
+                background: '#fef2f2',
+                color: '#991b1b',
+                border: '1px solid #fecaca',
+              },
+            },
+          }}
+        />
         <AppRoutes />
       </AuthProvider>
     </BrowserRouter>
