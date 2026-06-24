@@ -129,6 +129,8 @@ const Register = () => {
       e.email = 'Email wajib diisi';
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
       e.email = 'Format email tidak valid';
+    else if (!form.email.toLowerCase().trim().endsWith('.ac.id'))
+      e.email = 'Gunakan email kampus yang berakhiran .ac.id';
 
     if (!form.password)
       e.password = 'Password wajib diisi';

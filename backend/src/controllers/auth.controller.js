@@ -51,8 +51,13 @@ const register = asyncHandler(async (req, res) => {
   // Hash password (cost factor 12)
   const hashedPassword = await bcrypt.hash(password, 12);
 
-  // Verifikasi otomatis jika menggunakan email kampus
-  const isVerified = email.toLowerCase().trim().endsWith('.ac.id');
+  // Validasi email kampus
+  if (!email.toLowerCase().trim().endsWith('.ac.id')) {
+    return errorResponse(res, 400, 'Hanya email kampus (.ac.id) yang diizinkan untuk mendaftar.');
+  }
+
+  // Karena semua harus pakai email kampus, otomatis verified
+  const isVerified = true;
 
   // Buat user baru
   const user = await prisma.user.create({
