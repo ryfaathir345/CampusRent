@@ -4,6 +4,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { Toaster } from 'react-hot-toast';
 import MainLayout from './components/layouts/MainLayout';
 
 // Pages
@@ -254,6 +255,7 @@ const App = () => {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <Toaster position="top-center" />
         <AppRoutes />
       </AuthProvider>
     </BrowserRouter>
