@@ -78,6 +78,9 @@ model Item {
   stok               Int          @default(1)
   statusBarang       ItemStatus   @default(TERSEDIA) @map("status_barang")
   fotoBarang         String?      @map("foto_barang")
+  latitude           Float?
+  longitude          Float?
+  viewCount          Int          @default(0) @map("view_count")
   isBanned           Boolean      @default(false) @map("is_banned")
   ownerId            String       @map("owner_id")
   createdAt          DateTime     @default(now()) @map("created_at")

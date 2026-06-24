@@ -20,7 +20,8 @@ import {
   Moon,
   Sun,
   Heart,
-  Wallet
+  Wallet,
+  Activity
 } from 'lucide-react';
 import NotificationsDropdown from './NotificationsDropdown';
 

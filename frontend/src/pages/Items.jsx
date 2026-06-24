@@ -1,7 +1,7 @@
 // src/pages/Items.jsx
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Filter, MapPin, Clock, Tag, GraduationCap } from 'lucide-react';
+import { Search, Filter, MapPin, Clock, Tag, GraduationCap, Navigation } from 'lucide-react';
 import itemService from '../services/item.service';
 import categoryService from '../services/category.service';
 import toast from 'react-hot-toast';
@@ -31,6 +31,12 @@ const Items = () => {
   const [kategori, setKategori] = useState('Semua');
   const [status, setStatus] = useState('Semua');
   const [universitas, setUniversitas] = useState('');
+  
+  // Geolocation states
+  const [useLocation, setUseLocation] = useState(false);
+  const [lat, setLat] = useState(null);
+  const [lng, setLng] = useState(null);
+  const [radius, setRadius] = useState(10); // default 10km
 
   const fetchItems = async () => {
     setIsLoading(true);
@@ -40,6 +46,11 @@ const Items = () => {
       if (kategori !== 'Semua') params.kategori = kategori;
       if (status !== 'Semua') params.status = status;
       if (universitas) params.universitas = universitas;
+      if (useLocation && lat && lng) {
+        params.lat = lat;
+        params.lng = lng;
+        params.radius = radius;
+      }
       
       const res = await itemService.getItems(params);
       setItems(res.data || []);
@@ -56,7 +67,7 @@ const Items = () => {
       fetchItems();
     }, 200);
     return () => clearTimeout(delay);
-  }, [search, kategori, status, universitas]);
+  }, [search, kategori, status, universitas, useLocation, lat, lng, radius]);
 
   return (
     <div className="bg-gray-50 min-h-screen py-10">
@@ -119,6 +130,52 @@ const Items = () => {
               <option value="DIPINJAM">Dipinjam</option>
             </select>
           </div>
+          
+          {/* Geolocation toggle */}
+          <div className="w-full md:w-auto flex items-center gap-2">
+            <button
+              onClick={() => {
+                if (!useLocation) {
+                  if (navigator.geolocation) {
+                    toast.loading('Mendapatkan lokasi...', { id: 'geosearch' });
+                    navigator.geolocation.getCurrentPosition(
+                      (position) => {
+                        setLat(position.coords.latitude);
+                        setLng(position.coords.longitude);
+                        setUseLocation(true);
+                        toast.success('Lokasi ditemukan!', { id: 'geosearch' });
+                      },
+                      (error) => {
+                        toast.error('Gagal mendapatkan lokasi GPS.', { id: 'geosearch' });
+                      }
+                    );
+                  } else {
+                    toast.error('Geolokasi tidak didukung.');
+                  }
+                } else {
+                  setUseLocation(false);
+                  setLat(null);
+                  setLng(null);
+                }
+              }}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border transition-all text-sm font-medium ${useLocation ? 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700' : 'bg-gray-50 text-gray-600 border-gray-200 dark:bg-slate-700/50 dark:text-slate-300 dark:border-slate-600'}`}
+            >
+              <Navigation size={18} />
+              <span className="hidden sm:inline">{useLocation ? 'Sekitar Saya Aktif' : 'Cari di Sekitar Saya'}</span>
+            </button>
+            {useLocation && (
+              <select
+                value={radius}
+                onChange={(e) => setRadius(Number(e.target.value))}
+                className="px-3 py-2.5 bg-gray-50 dark:bg-slate-700/50 border border-gray-200 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none text-sm dark:text-white"
+              >
+                <option value={5}>5 km</option>
+                <option value={10}>10 km</option>
+                <option value={20}>20 km</option>
+                <option value={50}>50 km</option>
+              </select>
+            )}
+          </div>
         </div>
 
         {/* Grid Items */}
@@ -173,7 +230,14 @@ const Items = () => {
                   
                   <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-3 flex-1">
                     <MapPin size={12} className="flex-shrink-0" />
-                    <span className="line-clamp-2">{item.lokasiPengambilan}</span>
+                    <span className="line-clamp-2">
+                      {item.lokasiPengambilan}
+                      {item.distance !== undefined && item.distance !== null && (
+                        <span className="text-blue-600 dark:text-blue-400 font-semibold ml-1">
+                          ({item.distance < 1 ? '< 1 km' : `${Math.round(item.distance)} km`})
+                        </span>
+                      )}
+                    </span>
                   </div>
 
                   <div className="flex items-end justify-between pt-3 border-t border-gray-100 dark:border-slate-700 mt-auto">

@@ -5,9 +5,23 @@ const prisma = require('../config/database');
 const { successResponse, errorResponse } = require('../utils/response');
 const { asyncHandler } = require('../middleware/errorHandler');
 
+// Calculate distance using Haversine formula
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  if (!lat1 || !lon1 || !lat2 || !lon2) return null;
+  const R = 6371; // Radius of the earth in km
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a = 
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * 
+    Math.sin(dLon / 2) * Math.sin(dLon / 2); 
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)); 
+  return R * c; // Distance in km
+}
+
 // GET /api/items
 const getItems = asyncHandler(async (req, res) => {
-  const { search, kategori, status, ownerId, universitas } = req.query;
+  const { search, kategori, status, ownerId, universitas, lat, lng, radius } = req.query;
 
   const where = {};
   if (search) {
@@ -31,7 +45,7 @@ const getItems = asyncHandler(async (req, res) => {
   // Jangan tampilkan barang yang di-ban kecuali dipanggil oleh admin (tapi ini rute publik, jadi selau false)
   where.isBanned = false;
 
-  const items = await prisma.item.findMany({
+  let items = await prisma.item.findMany({
     where,
     orderBy: { createdAt: 'desc' },
     include: {
@@ -41,6 +55,22 @@ const getItems = asyncHandler(async (req, res) => {
     }
   });
 
+  if (lat && lng) {
+    const userLat = parseFloat(lat);
+    const userLng = parseFloat(lng);
+    const maxRadius = radius ? parseFloat(radius) : 10; // default 10km
+
+    items = items.map(item => {
+      const distance = calculateDistance(userLat, userLng, item.latitude, item.longitude);
+      return { ...item, distance };
+    }).filter(item => item.distance === null || item.distance <= maxRadius)
+      .sort((a, b) => {
+        if (a.distance === null) return 1;
+        if (b.distance === null) return -1;
+        return a.distance - b.distance;
+      });
+  }
+
   return successResponse(res, 200, 'Berhasil mengambil daftar barang', items);
 });
 
@@ -48,8 +78,11 @@ const getItems = asyncHandler(async (req, res) => {
 const getItemById = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  const item = await prisma.item.findUnique({
+  const item = await prisma.item.update({
     where: { id },
+    data: {
+      viewCount: { increment: 1 }
+    },
     include: {
       owner: {
         select: { id: true, nama: true, jurusan: true, universitas: true, whatsapp: true, email: true, fotoProfil: true }
@@ -66,7 +99,7 @@ const getItemById = asyncHandler(async (req, res) => {
 
 // POST /api/items
 const createItem = asyncHandler(async (req, res) => {
-  const { namaBarang, kategori, deskripsi, kondisiBarang, lokasiPengambilan, maksimalHariPinjam, hargaSewa, stok } = req.body;
+  const { namaBarang, kategori, deskripsi, kondisiBarang, lokasiPengambilan, maksimalHariPinjam, hargaSewa, stok, latitude, longitude } = req.body;
   const userId = req.user.id;
 
   const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -96,7 +129,9 @@ const createItem = asyncHandler(async (req, res) => {
       stok: finalStok,
       statusBarang: finalStok > 0 ? 'TERSEDIA' : 'DIPINJAM',
       fotoBarang,
-      ownerId: userId
+      ownerId: userId,
+      latitude: latitude ? parseFloat(latitude) : null,
+      longitude: longitude ? parseFloat(longitude) : null
     }
   });
 
@@ -106,7 +141,7 @@ const createItem = asyncHandler(async (req, res) => {
 // PATCH /api/items/:id
 const updateItem = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { namaBarang, kategori, deskripsi, kondisiBarang, lokasiPengambilan, maksimalHariPinjam, hargaSewa, statusBarang, stok } = req.body;
+  const { namaBarang, kategori, deskripsi, kondisiBarang, lokasiPengambilan, maksimalHariPinjam, hargaSewa, statusBarang, stok, latitude, longitude } = req.body;
 
   const existingItem = await prisma.item.findUnique({ where: { id } });
   if (!existingItem) {
@@ -125,7 +160,9 @@ const updateItem = asyncHandler(async (req, res) => {
     ...(lokasiPengambilan && { lokasiPengambilan }),
     ...(maksimalHariPinjam && { maksimalHariPinjam: parseInt(maksimalHariPinjam) }),
     ...(hargaSewa !== undefined && { hargaSewa: parseInt(String(hargaSewa).replace(/\D/g, '')) || 0 }),
-    ...(statusBarang && { statusBarang })
+    ...(statusBarang && { statusBarang }),
+    ...(latitude !== undefined && { latitude: latitude ? parseFloat(latitude) : null }),
+    ...(longitude !== undefined && { longitude: longitude ? parseFloat(longitude) : null })
   };
 
   if (stok !== undefined) {

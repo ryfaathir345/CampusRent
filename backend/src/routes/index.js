@@ -17,6 +17,7 @@ const wishlistRoutes = require('./wishlist.routes');
 const reportRoutes = require('./report.routes');
 const paymentRoutes = require('./payment.routes');
 const walletRoutes = require('./wallet.routes');
+const ownerRoutes = require('./owner.routes');
 
 // Mount routes
 router.use('/auth', authRoutes);
@@ -32,6 +33,7 @@ router.use('/wishlists', wishlistRoutes);
 router.use('/reports', reportRoutes);
 router.use('/payments', paymentRoutes);
 router.use('/wallet', walletRoutes);
+router.use('/owner', ownerRoutes);
 
 // Health check endpoint
 router.get('/health', (req, res) => {

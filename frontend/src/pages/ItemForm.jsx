@@ -1,7 +1,7 @@
 // src/pages/ItemForm.jsx
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { ChevronLeft, Upload, Loader2 } from 'lucide-react';
+import { ChevronLeft, Upload, Loader2, MapPin } from 'lucide-react';
 import itemService from '../services/item.service';
 import categoryService from '../services/category.service';
 import toast from 'react-hot-toast';
@@ -21,7 +21,9 @@ const ItemForm = () => {
     maksimalHariPinjam: 1,
     hargaSewa: 0,
     stok: 1,
-    statusBarang: 'TERSEDIA'
+    statusBarang: 'TERSEDIA',
+    latitude: '',
+    longitude: ''
   });
   
   const [files, setFiles] = useState([]);
@@ -51,7 +53,9 @@ const ItemForm = () => {
             maksimalHariPinjam: item.maksimalHariPinjam,
             hargaSewa: item.hargaSewa,
             stok: item.stok || 1,
-            statusBarang: item.statusBarang
+            statusBarang: item.statusBarang,
+            latitude: item.latitude || '',
+            longitude: item.longitude || ''
           });
           if (item.fotoBarang) {
             const urls = item.fotoBarang.split(',').map(f => `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000'}${f}`);
@@ -72,6 +76,28 @@ const ItemForm = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleGetLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error('Geolokasi tidak didukung oleh browser Anda');
+      return;
+    }
+    
+    toast.loading('Mendapatkan lokasi...', { id: 'geo' });
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setForm(prev => ({
+          ...prev,
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude
+        }));
+        toast.success('Lokasi berhasil didapatkan', { id: 'geo' });
+      },
+      (error) => {
+        toast.error('Gagal mendapatkan lokasi. Pastikan izin GPS diberikan.', { id: 'geo' });
+      }
+    );
   };
 
   const handleFileChange = (e) => {
@@ -221,17 +247,32 @@ const ItemForm = () => {
               </div>
 
               {/* Lokasi */}
-              <div>
+              <div className="md:col-span-2">
                 <label className="form-label">Lokasi Pengambilan *</label>
-                <input 
-                  type="text" 
-                  name="lokasiPengambilan" 
-                  required 
-                  value={form.lokasiPengambilan} 
-                  onChange={handleChange} 
-                  className="form-input" 
-                  placeholder="Contoh: Gedung Fakultas Teknik, Kantin"
-                />
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    name="lokasiPengambilan" 
+                    required 
+                    value={form.lokasiPengambilan} 
+                    onChange={handleChange} 
+                    className="form-input flex-1" 
+                    placeholder="Contoh: Gedung Fakultas Teknik, Kantin"
+                  />
+                  <button 
+                    type="button"
+                    onClick={handleGetLocation}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors border border-blue-200 dark:bg-blue-900/30 dark:border-blue-800 dark:text-blue-400"
+                  >
+                    <MapPin size={18} />
+                    <span className="hidden sm:inline">Gunakan Lokasi Saat Ini</span>
+                  </button>
+                </div>
+                {form.latitude && form.longitude && (
+                  <p className="text-xs text-green-600 dark:text-green-400 mt-2 flex items-center gap-1">
+                    <MapPin size={12} /> Koordinat tersimpan: {form.latitude}, {form.longitude}
+                  </p>
+                )}
               </div>
 
               {/* Maks Hari */}
