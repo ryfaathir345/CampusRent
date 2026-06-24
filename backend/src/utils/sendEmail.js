@@ -6,10 +6,11 @@ const nodemailer = require('nodemailer');
  */
 const sendEmail = async (options) => {
   // Buat transporter menggunakan SMTP (disarankan Gmail untuk testing)
+  const port = parseInt(process.env.SMTP_PORT || '465', 10);
   const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: process.env.SMTP_PORT || 587,
-    secure: false, // true untuk 465, false untuk port lain
+    port: port,
+    secure: port === 465, // true untuk 465, false untuk port lain
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
