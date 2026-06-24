@@ -36,6 +36,10 @@ app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 // ─────────────────────────────────────────────
 app.use('/api', routes);
 
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'ok', message: 'Server is running!' });
+});
+
 // ─────────────────────────────────────────────
 // Error Handling
 // ─────────────────────────────────────────────
@@ -47,9 +51,13 @@ app.use(globalErrorHandler);
 // ─────────────────────────────────────────────
 const startServer = async () => {
   try {
-    // Test database connection
-    await prisma.$connect();
-    console.log('✅ Database connected successfully');
+    // We intentionally don't await prisma.$connect() here so the server can start
+    // and we can verify it's running via /api/health even if DB is failing.
+    prisma.$connect().then(() => {
+      console.log('✅ Database connected successfully');
+    }).catch(err => {
+      console.error('❌ Failed to connect to database in background:', err.message);
+    });
 
     app.listen(PORT, () => {
       console.log('');
@@ -61,8 +69,7 @@ const startServer = async () => {
       console.log('');
     });
   } catch (error) {
-    console.error('❌ Failed to connect to database:', error.message);
-    console.error('💡 Make sure MySQL is running and DATABASE_URL in .env is correct');
+    console.error('❌ Fatal error:', error.message);
     process.exit(1);
   }
 };
