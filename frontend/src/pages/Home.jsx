@@ -92,7 +92,11 @@ const Home = () => {
 
   useEffect(() => {
     categoryService.getCategories().then(res => {
-      setCategories(res.data);
+      if (Array.isArray(res.data)) {
+        setCategories(res.data);
+      } else {
+        console.error('Invalid categories data received:', res.data);
+      }
     }).catch(console.error);
   }, []);
 
