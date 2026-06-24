@@ -3,7 +3,9 @@
 
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const prisma = require('../config/database');
+const sendEmail = require('../utils/sendEmail');
 const { successResponse, errorResponse } = require('../utils/response');
 const { asyncHandler } = require('../middleware/errorHandler');
 
@@ -229,4 +231,128 @@ const changePassword = asyncHandler(async (req, res) => {
   return successResponse(res, 200, 'Password berhasil diubah.');
 });
 
-module.exports = { register, login, logout, getMe, updateProfile, changePassword };
+// ─────────────────────────────────────────────
+// @desc    Lupa password (Request reset link)
+// @route   POST /api/auth/forgot-password
+// @access  Public
+// ─────────────────────────────────────────────
+const forgotPassword = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return errorResponse(res, 400, 'Email wajib diisi.');
+  }
+
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user) {
+    return errorResponse(res, 404, 'Akun dengan email tersebut tidak ditemukan.');
+  }
+
+  // Buat token acak
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  // Hash token sebelum disimpan ke DB untuk keamanan
+  const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+  
+  // Set kedaluwarsa 1 jam dari sekarang
+  const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000);
+
+  await prisma.user.update({
+    where: { email },
+    data: {
+      resetToken: hashedToken,
+      resetTokenExpiry
+    }
+  });
+
+  // URL frontend untuk mereset password
+  // Ambil dari variabel lingkungan atau gunakan default frontend lokal
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+  const resetUrl = `${frontendUrl}/reset-password/${resetToken}`;
+
+  try {
+    // Kirim email
+    const message = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
+        <h2 style="color: #2563eb; text-align: center;">Pemulihan Kata Sandi CampusRent</h2>
+        <p>Halo, ${user.nama}!</p>
+        <p>Anda menerima email ini karena Anda (atau seseorang) meminta pengaturan ulang kata sandi untuk akun CampusRent Anda.</p>
+        <p>Silakan klik tombol di bawah ini untuk mengatur ulang kata sandi Anda. Tautan ini hanya berlaku selama <strong>1 jam</strong>.</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${resetUrl}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Reset Kata Sandi</a>
+        </div>
+        <p>Atau salin dan tempel tautan berikut di peramban Anda:</p>
+        <p style="word-break: break-all; color: #6b7280; font-size: 14px;"><a href="${resetUrl}">${resetUrl}</a></p>
+        <hr style="border: 0; border-top: 1px solid #e0e0e0; margin: 20px 0;">
+        <p style="font-size: 12px; color: #9ca3af;">Jika Anda tidak meminta ini, abaikan saja email ini dan kata sandi Anda akan tetap aman.</p>
+      </div>
+    `;
+
+    await sendEmail({
+      to: user.email,
+      subject: 'Pemulihan Kata Sandi Akun CampusRent',
+      html: message,
+    });
+
+    return successResponse(res, 200, 'Tautan reset password telah dikirim ke email Anda.');
+  } catch (error) {
+    // Jika gagal kirim email, hapus token di DB
+    await prisma.user.update({
+      where: { email },
+      data: {
+        resetToken: null,
+        resetTokenExpiry: null
+      }
+    });
+    
+    console.error('Gagal mengirim email reset password:', error);
+    return errorResponse(res, 500, 'Gagal mengirim email. Silakan coba lagi nanti.');
+  }
+});
+
+// ─────────────────────────────────────────────
+// @desc    Reset password menggunakan token
+// @route   POST /api/auth/reset-password
+// @access  Public
+// ─────────────────────────────────────────────
+const resetPassword = asyncHandler(async (req, res) => {
+  const { token, newPassword } = req.body;
+
+  if (!token || !newPassword) {
+    return errorResponse(res, 400, 'Token dan password baru wajib diisi.');
+  }
+
+  if (newPassword.length < 8) {
+    return errorResponse(res, 422, 'Password baru minimal 8 karakter.');
+  }
+
+  // Hash token dari input untuk dicocokkan dengan yang di database
+  const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+  // Cari user dengan token ini dan belum kedaluwarsa
+  const user = await prisma.user.findFirst({
+    where: {
+      resetToken: hashedToken,
+      resetTokenExpiry: { gt: new Date() } // expiry > waktu saat ini
+    }
+  });
+
+  if (!user) {
+    return errorResponse(res, 400, 'Token tidak valid atau sudah kedaluwarsa.');
+  }
+
+  // Update password baru dan hapus token
+  const hashedPassword = await bcrypt.hash(newPassword, 12);
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      password: hashedPassword,
+      resetToken: null,
+      resetTokenExpiry: null
+    }
+  });
+
+  return successResponse(res, 200, 'Password berhasil direset. Silakan login dengan password baru.');
+});
+
+module.exports = { register, login, logout, getMe, updateProfile, changePassword, forgotPassword, resetPassword };

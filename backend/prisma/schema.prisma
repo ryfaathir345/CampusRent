@@ -33,6 +33,8 @@ model User {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
   lastActiveAt DateTime @default(now()) @map("last_active_at")
+  resetToken   String?  @map("reset_token")
+  resetTokenExpiry DateTime? @map("reset_token_expiry")
 
   // Relations
   items         Item[]

@@ -11,6 +11,8 @@ import MainLayout from './components/layouts/MainLayout';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import NotFound from './pages/NotFound';
 
 import Items from './pages/Items';
@@ -219,6 +221,22 @@ const AppRoutes = () => {
         element={
           <GuestRoute>
             <Register />
+          </GuestRoute>
+        }
+      />
+      <Route
+        path="/forgot-password"
+        element={
+          <GuestRoute>
+            <ForgotPassword />
+          </GuestRoute>
+        }
+      />
+      <Route
+        path="/reset-password/:token"
+        element={
+          <GuestRoute>
+            <ResetPassword />
           </GuestRoute>
         }
       />
