@@ -1,0 +1,12 @@
+server {
+    # Listen on dynamic port provided by Railway, default to 80
+    listen ${PORT};
+    server_name localhost;
+
+    location / {
+        root /usr/share/nginx/html;
+        index index.html;
+        # This is required for React Router to work properly!
+        try_files $uri $uri/ /index.html;
+    }
+}

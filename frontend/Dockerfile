@@ -19,8 +19,8 @@ FROM nginx:alpine
 # Copy the build output to Nginx's html directory
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Expose the default Nginx port (Railway will detect this or you can set PORT variable)
-EXPOSE 80
+# Copy custom Nginx configuration template
+COPY nginx.conf.template /etc/nginx/templates/default.conf.template
 
 # Start Nginx server
 CMD ["nginx", "-g", "daemon off;"]
