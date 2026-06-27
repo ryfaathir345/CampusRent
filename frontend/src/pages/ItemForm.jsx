@@ -333,6 +333,7 @@ const ItemForm = () => {
                   min="1"
                   value={form.maksimalHariPinjam} 
                   onChange={handleChange} 
+                  onWheel={(e) => e.target.blur()}
                   className="form-input" 
                 />
               </div>
@@ -347,6 +348,7 @@ const ItemForm = () => {
                   min="1"
                   value={form.stok} 
                   onChange={handleChange} 
+                  onWheel={(e) => e.target.blur()}
                   className="form-input" 
                 />
               </div>
@@ -361,6 +363,7 @@ const ItemForm = () => {
                   min="0"
                   value={form.hargaSewa} 
                   onChange={handleChange} 
+                  onWheel={(e) => e.target.blur()}
                   className="form-input" 
                   placeholder="Isi 0 jika gratis dipinjamkan"
                 />

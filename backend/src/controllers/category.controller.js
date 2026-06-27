@@ -15,12 +15,14 @@ exports.getCategories = async (req, res) => {
 
     const categoryMap = {};
     itemCounts.forEach(c => {
-      categoryMap[c.kategori] = c._count.kategori;
+      // Use uppercase for case-insensitive matching (MySQL might return title case if it was inserted that way)
+      const key = (c.kategori || '').toUpperCase();
+      categoryMap[key] = (categoryMap[key] || 0) + c._count.kategori;
     });
 
     const categoriesWithCount = categories.map(cat => ({
       ...cat,
-      itemCount: categoryMap[cat.name] || 0
+      itemCount: categoryMap[cat.name.toUpperCase()] || 0
     }));
 
     res.json(categoriesWithCount);
