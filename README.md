@@ -30,8 +30,9 @@ CampusRent adalah platform web yang memungkinkan mahasiswa untuk saling **menyew
 - 💬 **Chat Real-time**: Komunikasi langsung antara peminjam dan penyewa lengkap dengan fitur kirim foto dan lokasi (Shareloc).
 - ⚙️ **Transaksi Tersistem**: Mulai dari pengajuan, persetujuan, proses pinjam, hingga pengembalian.
 - ⭐ **Sistem Reputasi**: Fitur ulasan (rating & review) beserta "Trust Score" (Skor Kepercayaan) pengguna.
-- 🛡️ **Panel Admin Utama**: Admin dapat memverifikasi KTM, menangguhkan akun (suspend), mem-banned barang, hingga mengatur kategori.
-- 🌙 **Desain Elegan**: Tampilan UI modern dan responsif dengan dukungan Dark Mode secara menyeluruh.
+- 🛡️ **Panel Admin Utama**: Admin dapat memverifikasi KTM (termasuk fitur *Batch Approve* / Verifikasi Semua sekaligus), menangguhkan akun (suspend), mem-banned barang, hingga mengatur kategori.
+- 👑 **Hak Akses Owner (Paduka Raja)**: Role tertinggi yang dapat melihat keseluruhan statistik, serta memiliki kontrol eksklusif untuk **mengangkat dan memberhentikan Admin**.
+- 🌙 **Desain Elegan & Dark Mode**: Tampilan UI Admin Panel modern (menggunakan TailwindCSS) bergaya *Royal Purple Dark Mode* yang eksklusif dengan aksen neon dan *glass-morphism*.
 
 ---
 
@@ -226,15 +227,15 @@ Approved → Chat dengan Peminjam → Serahkan Barang
 Konfirmasi Barang Dikembalikan → Selesai → Dapat Review
 ```
 
-### Alur Admin
+### Alur Admin & Owner
 ```
-Login sebagai Admin → Buka Panel Admin
+Login sebagai Admin/Owner → Buka Panel Admin (Desain Royal Purple)
       ↓
-Tab "Verifikasi KTM" → Cek foto KTM → Setujui atau Tolak
+Tab "Verifikasi KTM" → Cek foto KTM → Klik "Approve" (Bisa juga "Approve Semua" sekaligus)
       ↓
 Tab "Laporan" → Tinjau laporan masuk → Suspend akun bermasalah
       ↓
-Tab "Barang" → Monitor & ban barang yang bermasalah
+Tab "Kelola Users" → (Khusus OWNER) Klik "Jadikan Admin" atau "Hapus Admin"
 ```
 
 ---

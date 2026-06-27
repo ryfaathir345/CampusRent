@@ -1,7 +1,7 @@
 // src/pages/ItemForm.jsx
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { ChevronLeft, Upload, Loader2, MapPin } from 'lucide-react';
+import { ChevronLeft, Upload, Loader2, MapPin, X } from 'lucide-react';
 import itemService from '../services/item.service';
 import categoryService from '../services/category.service';
 import toast from 'react-hot-toast';
@@ -26,8 +26,9 @@ const ItemForm = () => {
     longitude: ''
   });
   
-  const [files, setFiles] = useState([]);
-  const [previews, setPreviews] = useState([]);
+  const [files, setFiles] = useState([]); // New File objects
+  const [existingPhotos, setExistingPhotos] = useState([]); // Array of photo paths (strings) from backend
+  const [previews, setPreviews] = useState([]); // Local Object URLs for new files
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
   const [categories, setCategories] = useState([]);
@@ -58,8 +59,8 @@ const ItemForm = () => {
             longitude: item.longitude || ''
           });
           if (item.fotoBarang) {
-            const urls = item.fotoBarang.split(',').map(f => `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000'}${f}`);
-            setPreviews(urls);
+            const urls = item.fotoBarang.split(',');
+            setExistingPhotos(urls);
           }
         }
       } catch (err) {
@@ -102,8 +103,8 @@ const ItemForm = () => {
 
   const handleFileChange = (e) => {
     const selectedFiles = Array.from(e.target.files);
-    if (selectedFiles.length > 5) {
-      toast.error('Maksimal 5 foto barang');
+    if (existingPhotos.length + files.length + selectedFiles.length > 5) {
+      toast.error('Maksimal 5 foto barang secara keseluruhan');
       return;
     }
     
@@ -115,8 +116,17 @@ const ItemForm = () => {
       }
     }
     
-    setFiles(selectedFiles);
-    setPreviews(selectedFiles.map(f => URL.createObjectURL(f)));
+    setFiles(prev => [...prev, ...selectedFiles]);
+    setPreviews(prev => [...prev, ...selectedFiles.map(f => URL.createObjectURL(f))]);
+  };
+
+  const handleRemoveExistingPhoto = (index) => {
+    setExistingPhotos(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleRemoveNewFile = (index) => {
+    setFiles(prev => prev.filter((_, i) => i !== index));
+    setPreviews(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e) => {
@@ -128,6 +138,15 @@ const ItemForm = () => {
       Object.keys(form).forEach(key => {
         formData.append(key, form[key]);
       });
+      if (isEdit) {
+        existingPhotos.forEach(photo => {
+          formData.append('existingPhotos[]', photo);
+        });
+        if (existingPhotos.length === 0) {
+          formData.append('photosCleared', 'true');
+        }
+      }
+
       if (files && files.length > 0) {
         files.forEach(f => formData.append('fotoBarang', f));
       }
@@ -178,11 +197,40 @@ const ItemForm = () => {
                 onClick={() => fileInputRef.current?.click()}
                 className="w-full h-48 border-2 border-dashed border-gray-300 dark:border-slate-600 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-colors relative overflow-hidden"
               >
-                {previews.length > 0 ? (
+                {existingPhotos.length > 0 || previews.length > 0 ? (
                   <div className="flex gap-3 overflow-x-auto p-4 w-full h-full items-center">
-                    {previews.map((p, idx) => (
-                      <img key={idx} src={p} alt={`Preview ${idx}`} className="h-full w-auto object-cover rounded-xl shadow-sm border border-slate-200 dark:border-slate-700" />
+                    {/* Render Existing Photos */}
+                    {existingPhotos.map((p, idx) => (
+                      <div key={`existing-${idx}`} className="relative h-full shrink-0 group">
+                        <img src={`${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000'}${p}`} alt={`Existing ${idx}`} className="h-full w-auto object-cover rounded-xl shadow-sm border border-slate-200 dark:border-slate-700" />
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); handleRemoveExistingPhoto(idx); }}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
                     ))}
+                    {/* Render New Previews */}
+                    {previews.map((p, idx) => (
+                      <div key={`new-${idx}`} className="relative h-full shrink-0 group">
+                        <img src={p} alt={`New Preview ${idx}`} className="h-full w-auto object-cover rounded-xl shadow-sm border border-slate-200 dark:border-slate-700" />
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); handleRemoveNewFile(idx); }}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ))}
+                    
+                    {existingPhotos.length + previews.length < 5 && (
+                      <div className="h-full shrink-0 aspect-square border-2 border-dashed border-gray-300 dark:border-slate-600 rounded-xl flex items-center justify-center hover:border-blue-500 hover:bg-blue-50/50 transition-colors text-gray-400">
+                        <Upload size={24} />
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <>

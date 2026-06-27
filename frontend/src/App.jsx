@@ -34,6 +34,7 @@ import AdminItemsModeration from './pages/admin/AdminItemsModeration';
 import AdminTransactions from './pages/admin/AdminTransactions';
 import AdminCategories from './pages/admin/AdminCategories';
 import AdminReports from './pages/admin/AdminReports';
+import AdminProfile from './pages/admin/AdminProfile';
 
 // ─── Protected Route wrapper ──────────────────
 const ProtectedRoute = ({ children }) => {
@@ -70,7 +71,7 @@ const AdminRoute = ({ children }) => {
   }
 
   if (!isAuthenticated) return <Navigate to="/login" replace />;
-  if (user?.role !== 'ADMIN' && user?.role !== 'admin') return <Navigate to="/" replace />;
+  if (user?.role !== 'ADMIN' && user?.role !== 'admin' && user?.role !== 'OWNER' && user?.role !== 'owner') return <Navigate to="/" replace />;
   
   return children;
 };
@@ -244,6 +245,7 @@ const AppRoutes = () => {
       {/* Admin Route */}
       <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
         <Route index element={<AdminOverview />} />
+        <Route path="profile" element={<AdminProfile />} />
         <Route path="users" element={<AdminUsers />} />
         <Route path="ktm" element={<AdminKTMVerification />} />
         <Route path="finance" element={<AdminFinance />} />

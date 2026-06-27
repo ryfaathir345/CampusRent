@@ -1,8 +1,17 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import adminService from '../../services/admin.service';
+import EcommerceMetrics from "../../tailadmin/components/ecommerce/EcommerceMetrics";
+import MonthlySalesChart from "../../tailadmin/components/ecommerce/MonthlySalesChart";
+import StatisticsChart from "../../tailadmin/components/ecommerce/StatisticsChart";
+import MonthlyTarget from "../../tailadmin/components/ecommerce/MonthlyTarget";
+import RecentOrders from "../../tailadmin/components/ecommerce/RecentOrders";
+import DemographicCard from "../../tailadmin/components/ecommerce/DemographicCard";
+import { useAuth } from "../../context/AuthContext";
 
 const AdminOverview = () => {
-  const [stats, setStats] = useState({ totalUsers: 0, onlineUsers: 0, totalItems: 0, activeTransactions: 0, totalRevenue: 0, averageSpending: 0 });
+  const { user } = useAuth();
+  const [stats, setStats] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -21,173 +30,99 @@ const AdminOverview = () => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-full min-h-[400px]">
-        <div className="animate-spin h-10 w-10 border-b-2 border-primary rounded-full"></div>
+      <div className="flex justify-center items-center h-[calc(100vh-200px)]">
+        <div className="animate-spin h-10 w-10 border-b-2 border-brand-500 rounded-full"></div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-[1400px] mx-auto animate-fade-in">
-      {/* Welcome Section */}
-      <div className="mb-stack-lg">
-        <h2 className="font-display-lg text-display-lg text-on-surface">Dashboard Overview</h2>
-        <p className="font-body-lg text-body-lg text-on-surface-variant">Real-time performance metrics for the CampusRent ecosystem.</p>
-      </div>
-
-      {/* Stat Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-gutter mb-stack-lg">
-        {/* Card 1: Total Students */}
-        <div className="bg-white p-6 rounded-xl border border-outline-variant shadow-[0_1px_3px_0_rgba(0,0,0,0.1)] hover:shadow-lg transition-all group">
-          <div className="flex justify-between items-start mb-4">
-            <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-              <span className="material-symbols-outlined text-[28px]">group</span>
+    <div>
+      {user?.role === 'OWNER' && (
+        <div className="mb-6 relative overflow-hidden rounded-2xl bg-gradient-to-r from-rose-500 via-purple-500 to-blue-500 p-1 shadow-2xl animate-gradient-x">
+          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-30 animate-pulse"></div>
+          <div className="relative z-10 flex items-center justify-between p-6">
+            <div className="text-left text-white max-w-xl">
+              <h2 className="text-2xl md:text-3xl font-black tracking-tight drop-shadow-lg flex items-center gap-3 mb-2">
+                <span className="bg-white/20 p-2 rounded-xl border border-white/30 backdrop-blur-md shadow-lg text-2xl">👑</span> 
+                Paduka Raja {user?.nama?.split(' ')[0]} <span className="animate-pulse text-xl">✨</span>
+              </h2>
+              <p className="text-sm md:text-base font-medium text-white/90 drop-shadow-md leading-relaxed">
+                Selamat datang di Singgasana CampusRent! Jangan lupa cek cuan hari ini ya Bos! 💸💅
+              </p>
             </div>
-            <span className="text-tertiary font-label-sm bg-tertiary-fixed-dim/20 px-2 py-1 rounded flex items-center gap-1">
-              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> {stats.onlineUsers} Online
-            </span>
-          </div>
-          <h3 className="font-body-md text-body-md text-on-surface-variant">Total Students</h3>
-          <p className="font-display-lg text-display-lg text-on-surface mt-1">{stats.totalUsers}</p>
-        </div>
-
-        {/* Card 2: Total Items */}
-        <div className="bg-white p-6 rounded-xl border border-outline-variant shadow-[0_1px_3px_0_rgba(0,0,0,0.1)] hover:shadow-lg transition-all group">
-          <div className="flex justify-between items-start mb-4">
-            <div className="w-12 h-12 bg-secondary/10 rounded-lg flex items-center justify-center text-secondary group-hover:bg-secondary group-hover:text-white transition-colors">
-              <span className="material-symbols-outlined text-[28px]">inventory_2</span>
-            </div>
-            <span className="text-primary font-label-sm bg-primary-fixed/30 px-2 py-1 rounded">Registered</span>
-          </div>
-          <h3 className="font-body-md text-body-md text-on-surface-variant">Total Items</h3>
-          <p className="font-display-lg text-display-lg text-on-surface mt-1">{stats.totalItems}</p>
-        </div>
-
-        {/* Card 3: Active Transactions */}
-        <div className="bg-white p-6 rounded-xl border border-outline-variant shadow-[0_1px_3px_0_rgba(0,0,0,0.1)] hover:shadow-lg transition-all group">
-          <div className="flex justify-between items-start mb-4">
-            <div className="w-12 h-12 bg-tertiary/10 rounded-lg flex items-center justify-center text-tertiary group-hover:bg-tertiary group-hover:text-white transition-colors">
-              <span className="material-symbols-outlined text-[28px]">payments</span>
-            </div>
-            <span className="text-error font-label-sm bg-error-container/40 px-2 py-1 rounded">Ongoing</span>
-          </div>
-          <h3 className="font-body-md text-body-md text-on-surface-variant">Active Transactions</h3>
-          <p className="font-display-lg text-display-lg text-on-surface mt-1">{stats.activeTransactions}</p>
-        </div>
-
-        {/* Card 4: Average Spending */}
-        <div className="bg-white p-6 rounded-xl border border-outline-variant shadow-[0_1px_3px_0_rgba(0,0,0,0.1)] hover:shadow-lg transition-all group">
-          <div className="flex justify-between items-start mb-4">
-            <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-              <span className="material-symbols-outlined text-[28px]">trending_up</span>
-            </div>
-            <span className="text-primary font-label-sm bg-primary-fixed/30 px-2 py-1 rounded">Rata-Rata</span>
-          </div>
-          <h3 className="font-body-md text-body-md text-on-surface-variant">Pengeluaran Penyewa</h3>
-          <p className="font-display-sm text-display-sm text-on-surface mt-1 truncate" title={`Rp ${stats.averageSpending.toLocaleString('id-ID')}`}>
-            Rp {stats.averageSpending.toLocaleString('id-ID')}
-          </p>
-        </div>
-
-        {/* Card 5: Total Revenue */}
-        <div className="bg-white p-6 rounded-xl border border-outline-variant shadow-[0_1px_3px_0_rgba(0,0,0,0.1)] hover:shadow-lg transition-all group">
-          <div className="flex justify-between items-start mb-4">
-            <div className="w-12 h-12 bg-tertiary/10 rounded-lg flex items-center justify-center text-tertiary group-hover:bg-tertiary group-hover:text-white transition-colors">
-              <span className="material-symbols-outlined text-[28px]">account_balance_wallet</span>
-            </div>
-            <span className="text-tertiary font-label-sm bg-tertiary-fixed-dim/20 px-2 py-1 rounded">Laba</span>
-          </div>
-          <h3 className="font-body-md text-body-md text-on-surface-variant">Laba Platform</h3>
-          <p className="font-display-sm text-display-sm text-on-surface mt-1 truncate" title={`Rp ${stats.totalRevenue.toLocaleString('id-ID')}`}>
-            Rp {stats.totalRevenue.toLocaleString('id-ID')}
-          </p>
-        </div>
-      </div>
-
-      {/* Bento Grid Layout for Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
-        {/* Chart Section: Weekly Transaction Volume */}
-        <div className="lg:col-span-8 bg-white p-gutter rounded-xl border border-outline-variant shadow-[0_1px_3px_0_rgba(0,0,0,0.1)]">
-          <div className="flex justify-between items-center mb-8">
-            <div>
-              <h3 className="font-headline-sm text-headline-sm text-on-surface">Weekly Transaction Volume</h3>
-              <p className="font-label-sm text-label-sm text-on-surface-variant">Transaction density monitored across 7 days</p>
-            </div>
-            <div className="flex gap-2">
-              <select className="bg-surface-container border border-outline-variant rounded-full px-4 py-1 text-label-sm focus:ring-primary outline-none">
-                <option>Last 7 Days</option>
-                <option>Last 30 Days</option>
-              </select>
-              <button className="bg-primary text-white font-label-sm px-4 py-1 rounded-full hover:shadow-md transition-shadow">Download CSV</button>
-            </div>
-          </div>
-
-          {/* Custom Bar Chart UI (Static placeholder from template) */}
-          <div className="h-[300px] flex items-end justify-between gap-4 pt-10 border-b border-outline-variant pb-2 relative">
-            <div className="absolute inset-x-0 bottom-[25%] border-t border-outline-variant/30 h-px"></div>
-            <div className="absolute inset-x-0 bottom-[50%] border-t border-outline-variant/30 h-px"></div>
-            <div className="absolute inset-x-0 bottom-[75%] border-t border-outline-variant/30 h-px"></div>
             
-            {[
-              { day: 'Mon', h: '60%' }, { day: 'Tue', h: '45%' }, { day: 'Wed', h: '80%' }, 
-              { day: 'Thu', h: '65%' }, { day: 'Fri', h: '95%', active: true }, 
-              { day: 'Sat', h: '35%' }, { day: 'Sun', h: '50%' }
-            ].map((d, i) => (
-              <div key={i} className="flex-1 flex flex-col items-center gap-2 group cursor-pointer h-full justify-end">
-                <div 
-                  className={`w-full max-w-[48px] rounded-t-lg transition-all duration-1000 ease-out relative overflow-hidden ${
-                    d.active ? 'bg-primary-container' : 'bg-secondary-container/50 group-hover:bg-primary-container'
-                  }`} 
-                  style={{ height: d.h }}
-                >
-                  {!d.active && <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>}
-                </div>
-                <span className={`font-label-sm text-label-sm ${d.active ? 'text-on-surface' : 'text-on-surface-variant'}`}>{d.day}</span>
-              </div>
-            ))}
+            {/* Crown Decoration on the right */}
+            <div className="hidden md:flex relative right-2 items-center justify-center">
+              <div className="absolute w-24 h-24 bg-yellow-500/30 blur-[30px] rounded-full animate-pulse"></div>
+              <span className="text-[70px] leading-none drop-shadow-[0_10px_30px_rgba(255,215,0,0.5)] transform rotate-12 hover:rotate-0 transition-transform duration-500 cursor-default">
+                👑
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      <div className="grid grid-cols-12 gap-4 md:gap-6 animate-fade-in">
+        {/* ROW 1: 4 Metric Cards */}
+        <div className="col-span-12">
+          <EcommerceMetrics
+            totalUsers={stats?.totalUsers}
+            onlineUsers={stats?.onlineUsers}
+            totalItems={stats?.totalItems}
+            activeItems={stats?.activeItems}
+            totalRevenue={stats?.totalRevenue}
+            averageSpending={stats?.averageSpending}
+          />
+        </div>
+
+        {/* ROW 2: Monthly Sales Chart (Span 8) and Quick Actions (Span 4) */}
+        <div className="col-span-12 xl:col-span-8">
+          <MonthlySalesChart />
+        </div>
+
+        <div className="col-span-12 xl:col-span-4 space-y-6">
+          <div className="rounded-2xl border border-[#2d2e42] bg-[#1a1b2e] p-5 shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+            <h3 className="mb-5 text-lg font-bold text-white flex items-center gap-2">
+              <span className="text-purple-400">⚡</span> Quick Actions
+            </h3>
+            <div className="grid grid-cols-2 gap-4">
+              <Link to="/admin/items" className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-300 hover:bg-purple-500/20 transition">
+                <span className="text-2xl">📦</span>
+                <span className="text-xs font-semibold">Tambah Item</span>
+              </Link>
+              <Link to="/admin/ktm" className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-300 hover:bg-blue-500/20 transition">
+                <span className="text-2xl">💳</span>
+                <span className="text-xs font-semibold">Verifikasi KTM</span>
+              </Link>
+              <Link to="/admin/reports" className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-pink-500/10 border border-pink-500/20 text-pink-300 hover:bg-pink-500/20 transition">
+                <span className="text-2xl">📊</span>
+                <span className="text-xs font-semibold">Laporan</span>
+              </Link>
+              <Link to="/admin/users" className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-300 hover:bg-orange-500/20 transition">
+                <span className="text-2xl">👥</span>
+                <span className="text-xs font-semibold">Kelola Users</span>
+              </Link>
+            </div>
           </div>
         </div>
 
-        {/* Side Card: Quick Actions / Distribution */}
-        <div className="lg:col-span-4 flex flex-col gap-gutter">
-          <div className="bg-primary p-6 rounded-xl text-white relative overflow-hidden shadow-[0_4px_10px_rgba(99,14,212,0.3)]">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
-            <h3 className="font-headline-sm text-headline-sm mb-4 relative z-10">Admin Quick Access</h3>
-            <div className="space-y-3 relative z-10">
-              <button className="w-full py-3 px-4 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-lg flex items-center justify-between transition-colors border border-white/20">
-                <span className="font-body-md">Verify KTM Batch</span>
-                <span className="material-symbols-outlined">arrow_forward_ios</span>
-              </button>
-              <button className="w-full py-3 px-4 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-lg flex items-center justify-between transition-colors border border-white/20">
-                <span className="font-body-md">Flag Irregular Item</span>
-                <span className="material-symbols-outlined">report</span>
-              </button>
-            </div>
-          </div>
-          
-          <div className="bg-white p-6 rounded-xl border border-outline-variant flex-1 flex flex-col">
-            <h3 className="font-label-md text-label-md text-on-surface mb-4">Item Status Distribution</h3>
-            <div className="space-y-4">
-              <div>
-                <div className="flex justify-between mb-1">
-                  <span className="font-label-sm text-label-sm">Available</span>
-                  <span className="font-label-sm text-label-sm">74%</span>
-                </div>
-                <div className="w-full bg-surface-container rounded-full h-2">
-                  <div className="bg-tertiary h-2 rounded-full" style={{ width: '74%' }}></div>
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between mb-1">
-                  <span className="font-label-sm text-label-sm">In Rent</span>
-                  <span className="font-label-sm text-label-sm">21%</span>
-                </div>
-                <div className="w-full bg-surface-container rounded-full h-2">
-                  <div className="bg-primary h-2 rounded-full" style={{ width: '21%' }}></div>
-                </div>
-              </div>
-            </div>
-          </div>
+        {/* ROW 3: Recent Orders (Span 8) and Monthly Target (Span 4) */}
+        <div className="col-span-12 xl:col-span-8">
+          <RecentOrders />
+        </div>
+
+        <div className="col-span-12 xl:col-span-4">
+          <MonthlyTarget />
+        </div>
+
+        {/* ROW 4: Extra Charts */}
+        <div className="col-span-12 xl:col-span-7">
+          <StatisticsChart />
+        </div>
+
+        <div className="col-span-12 xl:col-span-5">
+          <DemographicCard />
         </div>
       </div>
     </div>

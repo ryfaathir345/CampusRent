@@ -42,6 +42,12 @@ const protect = async (req, res, next) => {
       return errorResponse(res, 401, 'Akun tidak ditemukan. Silakan login ulang.');
     }
 
+    // Pengecekan Single Concurrent Login:
+    // Jika token yang dipakai tidak sama dengan token aktif di database, tolak akses.
+    if (user.currentLoginToken && user.currentLoginToken !== token) {
+      return errorResponse(res, 401, 'Sesi tidak valid atau telah dibatalkan. Silakan login ulang.');
+    }
+
     // Update lastActiveAt jika sudah lebih dari 5 menit untuk mengurangi beban database
     const now = new Date();
     const lastActive = new Date(user.lastActiveAt);
@@ -91,10 +97,17 @@ const isSelf = (req, res, next) => {
 };
 
 const isAdmin = (req, res, next) => {
-  if (req.user.role !== 'ADMIN' && req.user.role !== 'admin') {
+  if (req.user.role !== 'ADMIN' && req.user.role !== 'admin' && req.user.role !== 'OWNER' && req.user.role !== 'owner') {
     return errorResponse(res, 403, 'Akses khusus Administrator.');
   }
   next();
 };
 
-module.exports = { protect, restrictTo, isSelf, isAdmin };
+const isOwner = (req, res, next) => {
+  if (req.user.role !== 'OWNER' && req.user.role !== 'owner') {
+    return errorResponse(res, 403, 'Akses khusus Owner.');
+  }
+  next();
+};
+
+module.exports = { protect, restrictTo, isSelf, isAdmin, isOwner };

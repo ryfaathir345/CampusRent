@@ -13,6 +13,7 @@ datasource db {
 enum Role {
   MAHASISWA
   ADMIN
+  OWNER
 }
 
 model User {
@@ -35,6 +36,7 @@ model User {
   lastActiveAt DateTime @default(now()) @map("last_active_at")
   resetToken   String?  @map("reset_token")
   resetTokenExpiry DateTime? @map("reset_token_expiry")
+  currentLoginToken String? @map("current_login_token") @db.Text
 
   // Relations
   items         Item[]
@@ -94,6 +96,7 @@ model Item {
   transactions       Transaction[]
   reviews            Review[]
   wishlists          Wishlist[]
+  reports            Report[]
 
   @@map("items")
 }
@@ -234,7 +237,8 @@ enum ReportStatus {
 model Report {
   id          String   @id @default(uuid())
   reporterId  String   @map("reporter_id")
-  reportedId  String   @map("reported_id")
+  reportedId  String?  @map("reported_id")
+  itemId      String?  @map("item_id")
   reason      String
   description String?  @db.Text
   status      ReportStatus @default(PENDING)
@@ -242,7 +246,8 @@ model Report {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   reporter    User     @relation("Reporter", fields: [reporterId], references: [id], onDelete: Cascade)
-  reported    User     @relation("Reported", fields: [reportedId], references: [id], onDelete: Cascade)
+  reported    User?    @relation("Reported", fields: [reportedId], references: [id], onDelete: Cascade)
+  item        Item?    @relation(fields: [itemId], references: [id], onDelete: Cascade)
 
   @@map("reports")
 }
@@ -329,4 +334,11 @@ model ExtensionRequest {
   transaction   Transaction     @relation(fields: [transactionId], references: [id], onDelete: Cascade)
 
   @@map("extension_requests")
+}
+
+model AppSetting {
+  key   String @id
+  value String
+
+  @@map("app_settings")
 }

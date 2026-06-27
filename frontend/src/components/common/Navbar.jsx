@@ -178,7 +178,7 @@ const Navbar = () => {
                         >
                           <LayoutDashboard size={15} /> Dashboard
                         </Link>
-                        {(user?.role === 'ADMIN' || user?.role === 'admin') && (
+                        {(user?.role === 'ADMIN' || user?.role === 'admin' || user?.role === 'OWNER' || user?.role === 'owner') && (
                           <Link
                             to="/admin"
                             className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-purple-700 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-colors"
@@ -282,11 +282,7 @@ const Navbar = () => {
         {isMenuOpen && (
           <div
             ref={mobileMenuRef}
-            className="md:hidden"
-            style={{
-              borderTop: '1px solid rgba(37, 99, 235, 0.1)',
-              background: 'rgba(255, 255, 255, 0.98)',
-            }}
+            className="md:hidden border-t border-blue-600/10 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md"
           >
             <div className="page-container py-4 flex flex-col gap-1">
               {navLinks.map(({ label, href, icon: Icon }) => (
@@ -324,7 +320,7 @@ const Navbar = () => {
                       </div>
                     </div>
                     
-                    {user?.role === 'ADMIN' && (
+                    {(user?.role === 'ADMIN' || user?.role === 'OWNER') && (
                       <Link
                         to="/admin"
                         onClick={() => setIsMenuOpen(false)}

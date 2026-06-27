@@ -114,17 +114,17 @@ const AdminFinance = () => {
   };
 
   return (
-    <div className="animate-fade-in max-w-[1400px] mx-auto">
+    <div className="animate-fade-in max-w-[1400px] mx-auto space-y-6">
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
+      <div className="flex flex-col md:flex-row md:items-end justify-between mb-6 gap-4">
         <div>
-          <h2 className="font-headline-md text-headline-md text-on-surface mb-1">Financial Oversight</h2>
-          <p className="text-on-surface-variant font-body-md">Monitor platform revenue, manage payouts, and verify transaction integrity.</p>
+          <h2 className="font-bold text-gray-800 text-title-md dark:text-white/90 mb-1">Financial Oversight</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Monitor platform revenue, manage payouts, and verify transaction integrity.</p>
         </div>
         <div className="flex gap-3">
           <button 
             onClick={handleExportFinancePDF}
-            className="flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-full font-label-md shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all active:scale-95"
+            className="flex items-center gap-2 px-6 py-2.5 bg-brand-500 text-white rounded-full font-medium text-sm shadow-theme-md hover:bg-brand-600 transition-all active:scale-95"
           >
             <span className="material-symbols-outlined text-[20px]">file_download</span>
             Export PDF
@@ -133,91 +133,91 @@ const AdminFinance = () => {
       </div>
 
       {/* Tabbed Navigation */}
-      <div className="flex border-b border-outline-variant mb-8 overflow-x-auto">
+      <div className="flex border-b border-gray-200 dark:border-gray-800 mb-6 overflow-x-auto no-scrollbar">
         <button 
           onClick={() => setActiveTab('profit')}
-          className={`px-8 py-4 font-label-md transition-all whitespace-nowrap relative ${activeTab === 'profit' ? 'text-primary' : 'text-on-surface-variant hover:text-primary'}`}
+          className={`px-8 py-4 text-sm font-medium transition-all whitespace-nowrap relative ${activeTab === 'profit' ? 'text-brand-500' : 'text-gray-500 dark:text-gray-400 hover:text-brand-500 dark:hover:text-brand-400'}`}
         >
           Platform Profit
-          {activeTab === 'profit' && <span className="absolute bottom-[-1px] left-0 w-full h-[2px] bg-primary"></span>}
+          {activeTab === 'profit' && <span className="absolute bottom-[-1px] left-0 w-full h-[2px] bg-brand-500 rounded-t-full"></span>}
         </button>
         <button 
           onClick={() => setActiveTab('verification')}
-          className={`px-8 py-4 font-label-md transition-all whitespace-nowrap relative ${activeTab === 'verification' ? 'text-primary' : 'text-on-surface-variant hover:text-primary'}`}
+          className={`px-8 py-4 text-sm font-medium transition-all whitespace-nowrap relative ${activeTab === 'verification' ? 'text-brand-500' : 'text-gray-500 dark:text-gray-400 hover:text-brand-500 dark:hover:text-brand-400'}`}
         >
           Payment Verification
-          {activeTab === 'verification' && <span className="absolute bottom-[-1px] left-0 w-full h-[2px] bg-primary"></span>}
+          {activeTab === 'verification' && <span className="absolute bottom-[-1px] left-0 w-full h-[2px] bg-brand-500 rounded-t-full"></span>}
         </button>
         <button 
           onClick={() => setActiveTab('withdrawals')}
-          className={`px-8 py-4 font-label-md transition-all whitespace-nowrap relative ${activeTab === 'withdrawals' ? 'text-primary' : 'text-on-surface-variant hover:text-primary'}`}
+          className={`px-8 py-4 text-sm font-medium transition-all whitespace-nowrap relative ${activeTab === 'withdrawals' ? 'text-brand-500' : 'text-gray-500 dark:text-gray-400 hover:text-brand-500 dark:hover:text-brand-400'}`}
         >
           Withdrawal Requests
-          {activeTab === 'withdrawals' && <span className="absolute bottom-[-1px] left-0 w-full h-[2px] bg-primary"></span>}
+          {activeTab === 'withdrawals' && <span className="absolute bottom-[-1px] left-0 w-full h-[2px] bg-brand-500 rounded-t-full"></span>}
         </button>
         <button 
           onClick={() => setActiveTab('topups')}
-          className={`px-8 py-4 font-label-md transition-all whitespace-nowrap relative ${activeTab === 'topups' ? 'text-primary' : 'text-on-surface-variant hover:text-primary'}`}
+          className={`px-8 py-4 text-sm font-medium transition-all whitespace-nowrap relative ${activeTab === 'topups' ? 'text-brand-500' : 'text-gray-500 dark:text-gray-400 hover:text-brand-500 dark:hover:text-brand-400'}`}
         >
           Top Up Verification
-          {activeTab === 'topups' && <span className="absolute bottom-[-1px] left-0 w-full h-[2px] bg-primary"></span>}
+          {activeTab === 'topups' && <span className="absolute bottom-[-1px] left-0 w-full h-[2px] bg-brand-500 rounded-t-full"></span>}
         </button>
       </div>
 
       {isLoading ? (
         <div className="flex justify-center items-center h-64">
-          <div className="animate-spin h-10 w-10 border-b-2 border-primary rounded-full"></div>
+          <div className="animate-spin h-10 w-10 border-b-2 border-brand-500 rounded-full"></div>
         </div>
       ) : (
         <>
           {/* Platform Profit Tab */}
           {activeTab === 'profit' && (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6">
               {/* Summary Bento Grid */}
-              <div className="lg:col-span-4 space-y-gutter">
+              <div className="lg:col-span-4 space-y-4 md:space-y-6">
                 {/* Total Earnings Card */}
-                <div className="glass-card bg-white p-stack-lg rounded-xl shadow-sm border border-outline-variant overflow-hidden relative group">
-                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                    <span className="material-symbols-outlined text-[80px] text-primary">payments</span>
+                <div className="bg-white dark:bg-white/[0.03] p-6 rounded-2xl shadow-theme-sm border border-gray-200 dark:border-gray-800 overflow-hidden relative group">
+                  <div className="absolute top-0 right-0 p-4 opacity-5 dark:opacity-10 group-hover:opacity-10 dark:group-hover:opacity-20 transition-opacity">
+                    <span className="material-symbols-outlined text-[80px] text-brand-500">payments</span>
                   </div>
-                  <p className="text-label-sm text-on-surface-variant uppercase tracking-widest font-bold mb-2">Total Earnings</p>
-                  <h3 className="font-display-lg text-display-lg text-primary mb-4">Rp {revenue.totalRevenue.toLocaleString('id-ID')}</h3>
-                  <div className="flex items-center gap-2 text-tertiary font-label-sm">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-widest font-bold mb-2">Total Earnings</p>
+                  <h3 className="font-bold text-title-xl2 text-brand-500 dark:text-brand-400 mb-4">Rp {revenue.totalRevenue.toLocaleString('id-ID')}</h3>
+                  <div className="flex items-center gap-2 text-success-500 text-xs font-medium">
                     <span className="material-symbols-outlined text-[18px]">trending_up</span>
                     <span>10% Admin Fee applied</span>
                   </div>
                 </div>
 
-                <div className="glass-card bg-white p-stack-lg rounded-xl shadow-sm border border-outline-variant border-l-4 border-l-secondary">
-                  <p className="text-label-sm text-on-surface-variant uppercase tracking-widest font-bold mb-2">Recent Payouts</p>
+                <div className="bg-white dark:bg-white/[0.03] p-6 rounded-2xl shadow-theme-sm border border-gray-200 dark:border-gray-800 border-l-4 border-l-warning-500 dark:border-l-warning-400">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-widest font-bold mb-2">Recent Payouts</p>
                   <div className="flex justify-between items-end">
-                    <h3 className="font-headline-md text-headline-md text-on-surface">Stable</h3>
-                    <span className="text-label-sm text-on-surface-variant">Processed automatically</span>
+                    <h3 className="font-bold text-title-lg text-gray-800 dark:text-white/90">Stable</h3>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">Processed automatically</span>
                   </div>
                 </div>
               </div>
 
               {/* Main Revenue Chart */}
               <div className="lg:col-span-8">
-                <div className="bg-white p-gutter rounded-xl shadow-sm border border-outline-variant h-full min-h-[400px] flex flex-col">
+                <div className="bg-white dark:bg-white/[0.03] p-6 rounded-2xl shadow-theme-sm border border-gray-200 dark:border-gray-800 h-full min-h-[400px] flex flex-col">
                   <div className="flex justify-between items-start mb-8">
                     <div>
-                      <h4 className="font-headline-sm text-headline-sm text-on-surface">Income Trends</h4>
-                      <p className="text-body-md text-on-surface-variant">Aggregated revenue from platform fees</p>
+                      <h4 className="font-bold text-title-sm text-gray-800 dark:text-white/90">Income Trends</h4>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Aggregated revenue from platform fees</p>
                     </div>
                   </div>
                   
-                  <div className="flex-1 w-full relative">
+                  <div className="flex-1 w-full relative -ml-4">
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={revenue.chartData}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ccc3d8" />
-                        <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#4a4455', fontSize: 12 }} dy={10} />
-                        <YAxis axisLine={false} tickLine={false} tick={{ fill: '#4a4455', fontSize: 12 }} dx={-10} tickFormatter={(value) => `Rp${value/1000}k`} />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ccc3d8" strokeOpacity={0.2} />
+                        <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#8A99AF', fontSize: 12 }} dy={10} />
+                        <YAxis axisLine={false} tickLine={false} tick={{ fill: '#8A99AF', fontSize: 12 }} dx={-10} tickFormatter={(value) => `Rp${value/1000}k`} />
                         <Tooltip 
-                          contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                          contentStyle={{ borderRadius: '12px', border: '1px solid #E2E8F0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', backgroundColor: '#fff' }}
                           formatter={(value) => [`Rp ${value.toLocaleString('id-ID')}`, 'Pendapatan']}
                         />
-                        <Line type="monotone" dataKey="revenue" stroke="#630ed4" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                        <Line type="monotone" dataKey="revenue" stroke="#3C50E0" strokeWidth={3} dot={{ r: 4, strokeWidth: 2, fill: '#fff', stroke: '#3C50E0' }} activeDot={{ r: 6, fill: '#3C50E0', stroke: '#fff' }} />
                       </LineChart>
                     </ResponsiveContainer>
                   </div>
@@ -228,53 +228,53 @@ const AdminFinance = () => {
 
           {/* Payment Verification Tab */}
           {activeTab === 'verification' && (
-            <div className="bg-white rounded-xl shadow-sm border border-outline-variant overflow-hidden">
-              <div className="p-gutter border-b border-outline-variant">
-                <h4 className="font-headline-sm text-headline-sm text-on-surface">Menunggu Verifikasi Pembayaran</h4>
+            <div className="bg-white dark:bg-white/[0.03] rounded-2xl shadow-theme-sm border border-gray-200 dark:border-gray-800 overflow-hidden">
+              <div className="p-6 border-b border-gray-200 dark:border-gray-800">
+                <h4 className="font-bold text-title-sm text-gray-800 dark:text-white/90">Menunggu Verifikasi Pembayaran</h4>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left">
-                  <thead className="bg-surface-container-low text-label-sm text-on-surface-variant uppercase tracking-wider">
+                  <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
                     <tr>
-                      <th className="px-gutter py-4 font-bold">Peminjam</th>
-                      <th className="px-gutter py-4 font-bold">Barang</th>
-                      <th className="px-gutter py-4 font-bold">Total Harga</th>
-                      <th className="px-gutter py-4 font-bold">Metode</th>
-                      <th className="px-gutter py-4 font-bold">Bukti</th>
-                      <th className="px-gutter py-4 font-bold text-right">Aksi</th>
+                      <th className="px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Peminjam</th>
+                      <th className="px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Barang</th>
+                      <th className="px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Harga</th>
+                      <th className="px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Metode</th>
+                      <th className="px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Bukti</th>
+                      <th className="px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">Aksi</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-outline-variant">
+                  <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                     {payments.length === 0 ? (
                       <tr>
-                        <td colSpan="6" className="px-gutter py-8 text-center text-on-surface-variant">Tidak ada pembayaran yang menunggu verifikasi.</td>
+                        <td colSpan="6" className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Tidak ada pembayaran yang menunggu verifikasi.</td>
                       </tr>
                     ) : payments.map(p => (
-                      <tr key={p.id} className="hover:bg-surface transition-colors">
-                        <td className="px-gutter py-4">
-                          <p className="font-body-md font-bold text-on-surface">{p.transaction.borrower.nama}</p>
+                      <tr key={p.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                        <td className="px-6 py-4">
+                          <p className="text-sm font-medium text-gray-800 dark:text-white/90">{p.transaction.borrower.nama}</p>
                         </td>
-                        <td className="px-gutter py-4">
-                          <p className="font-body-md text-on-surface">{p.transaction.item.namaBarang}</p>
-                          <p className="font-label-sm text-on-surface-variant text-xs">Pemilik: {p.transaction.item.owner.nama}</p>
+                        <td className="px-6 py-4">
+                          <p className="text-sm font-medium text-gray-800 dark:text-white/90">{p.transaction.item.namaBarang}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Pemilik: {p.transaction.item.owner.nama}</p>
                         </td>
-                        <td className="px-gutter py-4 font-bold text-on-surface">Rp {p.amount.toLocaleString('id-ID')}</td>
-                        <td className="px-gutter py-4">
-                          <span className="px-2.5 py-1 rounded-md bg-surface-container-high text-on-surface-variant font-label-sm">{p.paymentMethod}</span>
+                        <td className="px-6 py-4 text-sm font-bold text-gray-800 dark:text-white/90">Rp {p.amount.toLocaleString('id-ID')}</td>
+                        <td className="px-6 py-4">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">{p.paymentMethod}</span>
                         </td>
-                        <td className="px-gutter py-4">
+                        <td className="px-6 py-4">
                           {p.proofOfPayment ? (
-                            <button onClick={() => setImageModal({ isOpen: true, url: `${UPLOADS_URL}${p.proofOfPayment}` })} className="text-primary hover:underline font-label-sm flex items-center gap-1">
+                            <button onClick={() => setImageModal({ isOpen: true, url: `${UPLOADS_URL}${p.proofOfPayment}` })} className="text-brand-500 hover:text-brand-600 dark:text-brand-400 dark:hover:text-brand-300 text-sm font-medium flex items-center gap-1 transition-colors">
                               <span className="material-symbols-outlined text-[16px]">receipt</span> Lihat Bukti
                             </button>
                           ) : (
-                            <span className="text-on-surface-variant italic font-label-sm">Tidak ada bukti</span>
+                            <span className="text-gray-400 dark:text-gray-500 italic text-sm">Tidak ada bukti</span>
                           )}
                         </td>
-                        <td className="px-gutter py-4 text-right">
+                        <td className="px-6 py-4 text-right">
                           <div className="flex justify-end gap-2">
-                            <button onClick={() => handleVerifyPayment(p.id, 'approve')} className="px-4 py-1.5 bg-tertiary text-white rounded-full font-label-sm hover:bg-tertiary-container transition-colors shadow-sm">Setujui</button>
-                            <button onClick={() => handleVerifyPayment(p.id, 'reject')} className="px-4 py-1.5 bg-error text-white rounded-full font-label-sm hover:bg-error-container transition-colors shadow-sm">Tolak</button>
+                            <button onClick={() => handleVerifyPayment(p.id, 'approve')} className="px-4 py-1.5 bg-success-50 text-success-600 hover:bg-success-100 dark:bg-success-500/10 dark:text-success-500 dark:hover:bg-success-500/20 font-medium text-xs rounded-full transition-colors active:scale-95 border border-success-200 dark:border-success-500/30">Setujui</button>
+                            <button onClick={() => handleVerifyPayment(p.id, 'reject')} className="px-4 py-1.5 bg-error-50 text-error-600 hover:bg-error-100 dark:bg-error-500/10 dark:text-error-500 dark:hover:bg-error-500/20 font-medium text-xs rounded-full transition-colors active:scale-95 border border-error-200 dark:border-error-500/30">Tolak</button>
                           </div>
                         </td>
                       </tr>
@@ -287,44 +287,44 @@ const AdminFinance = () => {
 
           {/* Withdrawal Requests Tab */}
           {activeTab === 'withdrawals' && (
-            <div className="bg-white rounded-xl shadow-sm border border-outline-variant overflow-hidden">
-              <div className="p-gutter border-b border-outline-variant">
-                <h4 className="font-headline-sm text-headline-sm text-on-surface">Menunggu Proses Penarikan Dana</h4>
+            <div className="bg-white dark:bg-white/[0.03] rounded-2xl shadow-theme-sm border border-gray-200 dark:border-gray-800 overflow-hidden">
+              <div className="p-6 border-b border-gray-200 dark:border-gray-800">
+                <h4 className="font-bold text-title-sm text-gray-800 dark:text-white/90">Menunggu Proses Penarikan Dana</h4>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left">
-                  <thead className="bg-surface-container-low text-label-sm text-on-surface-variant uppercase tracking-wider">
+                  <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
                     <tr>
-                      <th className="px-gutter py-4 font-bold">Pengguna</th>
-                      <th className="px-gutter py-4 font-bold">Jumlah</th>
-                      <th className="px-gutter py-4 font-bold">Informasi Bank</th>
-                      <th className="px-gutter py-4 font-bold">Tanggal Request</th>
-                      <th className="px-gutter py-4 font-bold text-right">Aksi</th>
+                      <th className="px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Pengguna</th>
+                      <th className="px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Jumlah</th>
+                      <th className="px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Informasi Bank</th>
+                      <th className="px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tanggal Request</th>
+                      <th className="px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">Aksi</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-outline-variant">
+                  <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                     {withdrawals.length === 0 ? (
                       <tr>
-                        <td colSpan="5" className="px-gutter py-8 text-center text-on-surface-variant">Tidak ada permintaan penarikan dana.</td>
+                        <td colSpan="5" className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Tidak ada permintaan penarikan dana.</td>
                       </tr>
                     ) : withdrawals.map(w => (
-                      <tr key={w.id} className="hover:bg-surface transition-colors">
-                        <td className="px-gutter py-4">
-                          <p className="font-body-md font-bold text-on-surface">{w.user.nama}</p>
-                          <p className="font-label-sm text-on-surface-variant text-xs">{w.user.email}</p>
+                      <tr key={w.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                        <td className="px-6 py-4">
+                          <p className="text-sm font-medium text-gray-800 dark:text-white/90">{w.user.nama}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{w.user.email}</p>
                         </td>
-                        <td className="px-gutter py-4 font-bold text-on-surface">Rp {w.amount.toLocaleString('id-ID')}</td>
-                        <td className="px-gutter py-4">
-                          <p className="font-body-md text-on-surface">{w.bankName} - {w.accountNumber}</p>
-                          <p className="font-label-sm text-on-surface-variant text-xs">a.n {w.accountName}</p>
+                        <td className="px-6 py-4 text-sm font-bold text-gray-800 dark:text-white/90">Rp {w.amount.toLocaleString('id-ID')}</td>
+                        <td className="px-6 py-4">
+                          <p className="text-sm font-medium text-gray-800 dark:text-white/90">{w.bankName} - {w.accountNumber}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">a.n {w.accountName}</p>
                         </td>
-                        <td className="px-gutter py-4 text-body-md text-on-surface-variant">
+                        <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                           {new Date(w.createdAt).toLocaleDateString('id-ID')}
                         </td>
-                        <td className="px-gutter py-4 text-right">
+                        <td className="px-6 py-4 text-right">
                           <div className="flex justify-end gap-2">
-                            <button onClick={() => handleProcessWithdrawal(w.id, 'approve')} className="px-4 py-1.5 bg-tertiary text-white rounded-full font-label-sm hover:bg-tertiary-container transition-colors shadow-sm">Selesai Proses</button>
-                            <button onClick={() => handleProcessWithdrawal(w.id, 'reject')} className="px-4 py-1.5 bg-error text-white rounded-full font-label-sm hover:bg-error-container transition-colors shadow-sm">Tolak</button>
+                            <button onClick={() => handleProcessWithdrawal(w.id, 'approve')} className="px-4 py-1.5 bg-success-50 text-success-600 hover:bg-success-100 dark:bg-success-500/10 dark:text-success-500 dark:hover:bg-success-500/20 font-medium text-xs rounded-full transition-colors active:scale-95 border border-success-200 dark:border-success-500/30">Selesai Proses</button>
+                            <button onClick={() => handleProcessWithdrawal(w.id, 'reject')} className="px-4 py-1.5 bg-error-50 text-error-600 hover:bg-error-100 dark:bg-error-500/10 dark:text-error-500 dark:hover:bg-error-500/20 font-medium text-xs rounded-full transition-colors active:scale-95 border border-error-200 dark:border-error-500/30">Tolak</button>
                           </div>
                         </td>
                       </tr>
@@ -337,49 +337,49 @@ const AdminFinance = () => {
 
           {/* Top Up Requests Tab */}
           {activeTab === 'topups' && (
-            <div className="bg-white rounded-xl shadow-sm border border-outline-variant overflow-hidden">
-              <div className="p-gutter border-b border-outline-variant">
-                <h4 className="font-headline-sm text-headline-sm text-on-surface">Menunggu Verifikasi Top Up Saldo</h4>
+            <div className="bg-white dark:bg-white/[0.03] rounded-2xl shadow-theme-sm border border-gray-200 dark:border-gray-800 overflow-hidden">
+              <div className="p-6 border-b border-gray-200 dark:border-gray-800">
+                <h4 className="font-bold text-title-sm text-gray-800 dark:text-white/90">Menunggu Verifikasi Top Up Saldo</h4>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left">
-                  <thead className="bg-surface-container-low text-label-sm text-on-surface-variant uppercase tracking-wider">
+                  <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
                     <tr>
-                      <th className="px-gutter py-4 font-bold">Pengguna</th>
-                      <th className="px-gutter py-4 font-bold">Jumlah</th>
-                      <th className="px-gutter py-4 font-bold">Bukti Transfer</th>
-                      <th className="px-gutter py-4 font-bold">Tanggal Request</th>
-                      <th className="px-gutter py-4 font-bold text-right">Aksi</th>
+                      <th className="px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Pengguna</th>
+                      <th className="px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Jumlah</th>
+                      <th className="px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Bukti Transfer</th>
+                      <th className="px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tanggal Request</th>
+                      <th className="px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">Aksi</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-outline-variant">
+                  <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                     {topUps.length === 0 ? (
                       <tr>
-                        <td colSpan="5" className="px-gutter py-8 text-center text-on-surface-variant">Tidak ada permintaan top up saldo.</td>
+                        <td colSpan="5" className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Tidak ada permintaan top up saldo.</td>
                       </tr>
                     ) : topUps.map(t => (
-                      <tr key={t.id} className="hover:bg-surface transition-colors">
-                        <td className="px-gutter py-4">
-                          <p className="font-body-md font-bold text-on-surface">{t.user.nama}</p>
-                          <p className="font-label-sm text-on-surface-variant text-xs">{t.user.email}</p>
+                      <tr key={t.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                        <td className="px-6 py-4">
+                          <p className="text-sm font-medium text-gray-800 dark:text-white/90">{t.user.nama}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t.user.email}</p>
                         </td>
-                        <td className="px-gutter py-4 font-bold text-on-surface text-green-600">+ Rp {t.amount.toLocaleString('id-ID')}</td>
-                        <td className="px-gutter py-4">
+                        <td className="px-6 py-4 text-sm font-bold text-success-500 dark:text-success-400">+ Rp {t.amount.toLocaleString('id-ID')}</td>
+                        <td className="px-6 py-4">
                           {t.buktiUrl ? (
-                            <button onClick={() => setImageModal({ isOpen: true, url: `${UPLOADS_URL}${t.buktiUrl}` })} className="text-primary hover:underline font-label-sm flex items-center gap-1">
+                            <button onClick={() => setImageModal({ isOpen: true, url: `${UPLOADS_URL}${t.buktiUrl}` })} className="text-brand-500 hover:text-brand-600 dark:text-brand-400 dark:hover:text-brand-300 text-sm font-medium flex items-center gap-1 transition-colors">
                               <span className="material-symbols-outlined text-[16px]">receipt</span> Lihat Bukti
                             </button>
                           ) : (
-                            <span className="text-on-surface-variant italic font-label-sm">Tidak ada bukti</span>
+                            <span className="text-gray-400 dark:text-gray-500 italic text-sm">Tidak ada bukti</span>
                           )}
                         </td>
-                        <td className="px-gutter py-4 text-body-md text-on-surface-variant">
+                        <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                           {new Date(t.createdAt).toLocaleDateString('id-ID')}
                         </td>
-                        <td className="px-gutter py-4 text-right">
+                        <td className="px-6 py-4 text-right">
                           <div className="flex justify-end gap-2">
-                            <button onClick={() => handleProcessTopUp(t.id, 'approve')} className="px-4 py-1.5 bg-tertiary text-white rounded-full font-label-sm hover:bg-tertiary-container transition-colors shadow-sm">Setujui</button>
-                            <button onClick={() => handleProcessTopUp(t.id, 'reject')} className="px-4 py-1.5 bg-error text-white rounded-full font-label-sm hover:bg-error-container transition-colors shadow-sm">Tolak</button>
+                            <button onClick={() => handleProcessTopUp(t.id, 'approve')} className="px-4 py-1.5 bg-success-50 text-success-600 hover:bg-success-100 dark:bg-success-500/10 dark:text-success-500 dark:hover:bg-success-500/20 font-medium text-xs rounded-full transition-colors active:scale-95 border border-success-200 dark:border-success-500/30">Setujui</button>
+                            <button onClick={() => handleProcessTopUp(t.id, 'reject')} className="px-4 py-1.5 bg-error-50 text-error-600 hover:bg-error-100 dark:bg-error-500/10 dark:text-error-500 dark:hover:bg-error-500/20 font-medium text-xs rounded-full transition-colors active:scale-95 border border-error-200 dark:border-error-500/30">Tolak</button>
                           </div>
                         </td>
                       </tr>
@@ -395,24 +395,24 @@ const AdminFinance = () => {
       {/* Image View Modal */}
       {imageModal.isOpen && createPortal(
         <div 
-          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[99999] flex items-center justify-center p-4"
+          className="fixed inset-0 bg-gray-900/80 backdrop-blur-sm z-[99999] flex items-center justify-center p-4"
           onClick={() => setImageModal({ isOpen: false, url: '' })}
         >
           <div 
-            className="bg-surface rounded-2xl max-w-2xl w-full overflow-hidden shadow-2xl relative flex flex-col max-h-[90vh]"
+            className="bg-white dark:bg-gray-900 rounded-2xl max-w-2xl w-full overflow-hidden shadow-2xl relative flex flex-col max-h-[90vh] border border-gray-200 dark:border-gray-800"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex justify-between items-center p-4 border-b border-outline-variant bg-surface-container-low shrink-0">
-              <h3 className="font-headline-sm text-on-surface">Bukti Transfer</h3>
+            <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 shrink-0">
+              <h3 className="font-bold text-title-sm text-gray-800 dark:text-white/90">Bukti Transfer</h3>
               <button 
                 onClick={() => setImageModal({ isOpen: false, url: '' })} 
-                className="p-2 hover:bg-surface-container rounded-full text-on-surface-variant transition-colors cursor-pointer"
+                className="p-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-full text-gray-500 dark:text-gray-400 transition-colors cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[24px] block">close</span>
               </button>
             </div>
-            <div className="p-4 flex-1 min-h-0 flex items-center justify-center bg-surface-container-lowest overflow-auto">
-              <img src={imageModal.url} alt="Bukti Transfer" className="max-w-full h-auto rounded-lg object-contain" />
+            <div className="p-4 flex-1 min-h-0 flex items-center justify-center bg-gray-100 dark:bg-gray-950 overflow-auto">
+              <img src={imageModal.url} alt="Bukti Transfer" className="max-w-full h-auto rounded-lg object-contain shadow-theme-md" />
             </div>
           </div>
         </div>,

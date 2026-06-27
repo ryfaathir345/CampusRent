@@ -191,13 +191,21 @@ const ItemDetail = () => {
               <div className="bg-gray-100 dark:bg-slate-700 relative flex flex-col">
                 {item.fotoBarang ? (
                   <>
-                    <img 
-                      src={`${UPLOADS_URL}${item.fotoBarang.split(',')[activeImageIdx]}`} 
-                      alt={item.namaBarang}
-                      className="w-full h-[300px] md:h-[400px] object-cover" 
-                    />
+                    <div className="relative w-full h-[300px] md:h-[400px] overflow-hidden flex items-center justify-center bg-black/5 dark:bg-black/20">
+                      {/* Blurred background */}
+                      <div 
+                        className="absolute inset-0 bg-cover bg-center blur-2xl scale-125 opacity-40 dark:opacity-30"
+                        style={{ backgroundImage: `url(${UPLOADS_URL}${item.fotoBarang.split(',')[activeImageIdx]})` }}
+                      ></div>
+                      {/* Main image */}
+                      <img 
+                        src={`${UPLOADS_URL}${item.fotoBarang.split(',')[activeImageIdx]}`} 
+                        alt={item.namaBarang}
+                        className="w-full h-full object-contain relative z-10 drop-shadow-lg" 
+                      />
+                    </div>
                     {item.fotoBarang.split(',').length > 1 && (
-                      <div className="flex gap-2 p-4 overflow-x-auto bg-white dark:bg-slate-800 border-t border-gray-100 dark:border-slate-700">
+                      <div className="flex gap-2 p-4 overflow-x-auto bg-white dark:bg-slate-800 border-t border-gray-100 dark:border-slate-700 relative z-20">
                         {item.fotoBarang.split(',').map((img, idx) => (
                           <button 
                             key={idx}

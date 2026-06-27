@@ -172,25 +172,31 @@ const updateItem = asyncHandler(async (req, res) => {
     else if (!statusBarang) updateData.statusBarang = 'TERSEDIA';
   }
 
+  const { existingPhotos, photosCleared } = req.body;
+  
+  let finalPhotos = [];
+  if (existingPhotos) {
+    finalPhotos = Array.isArray(existingPhotos) ? existingPhotos : [existingPhotos];
+  }
+
   if (req.files && req.files.length > 0) {
-    updateData.fotoBarang = req.files.map(file => `/uploads/${file.filename}`).join(',');
-    // Optionally delete old photos
-    if (existingItem.fotoBarang) {
-      existingItem.fotoBarang.split(',').forEach(photo => {
-        try {
-          const oldPath = path.join(__dirname, '../../public', photo.trim());
-          if (fs.existsSync(oldPath)) {
-            fs.unlinkSync(oldPath);
-          }
-        } catch (error) {
-          console.error('Error deleting old photo:', error);
-        }
-      });
-    }
+    const newPhotos = req.files.map(file => `/uploads/${file.filename}`);
+    finalPhotos = [...finalPhotos, ...newPhotos];
   } else if (req.file) {
-    updateData.fotoBarang = `/uploads/${req.file.filename}`;
-    if (existingItem.fotoBarang) {
-      existingItem.fotoBarang.split(',').forEach(photo => {
+    finalPhotos = [...finalPhotos, `/uploads/${req.file.filename}`];
+  }
+
+  if (finalPhotos.length > 0) {
+    updateData.fotoBarang = finalPhotos.join(',');
+  } else if (photosCleared === 'true') {
+    updateData.fotoBarang = null;
+  }
+
+  // Delete old photos that are no longer in finalPhotos
+  if (existingItem.fotoBarang) {
+    const oldPhotos = existingItem.fotoBarang.split(',');
+    oldPhotos.forEach(photo => {
+      if (!finalPhotos.includes(photo.trim())) {
         try {
           const oldPath = path.join(__dirname, '../../public', photo.trim());
           if (fs.existsSync(oldPath)) {
@@ -199,8 +205,8 @@ const updateItem = asyncHandler(async (req, res) => {
         } catch (error) {
           console.error('Error deleting old photo:', error);
         }
-      });
-    }
+      }
+    });
   }
 
   const updatedItem = await prisma.item.update({

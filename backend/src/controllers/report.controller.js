@@ -5,18 +5,29 @@ const { asyncHandler } = require('../middleware/errorHandler');
 
 // POST /api/reports
 const submitReport = asyncHandler(async (req, res) => {
-  const { reportedId, reason, description } = req.body;
+  const { reportedId, itemId, reason, description } = req.body;
+  // frontend passes reportedUserId sometimes, but we map it as reportedId for users
+  // However, frontend `ItemDetail.jsx` passes { reportedUserId: item.ownerId, reason, itemId }
+  // So let's handle both reportedId and reportedUserId
+  const actualReportedId = reportedId || req.body.reportedUserId;
   const reporterId = req.user.id;
 
-  if (reportedId === reporterId) {
+  if (actualReportedId === reporterId && !itemId) {
     return errorResponse(res, 400, 'Anda tidak bisa melaporkan diri sendiri');
   }
 
-  const reportedUser = await prisma.user.findUnique({ where: { id: reportedId } });
-  if (!reportedUser) return errorResponse(res, 404, 'User yang dilaporkan tidak ditemukan');
+  if (actualReportedId) {
+    const reportedUser = await prisma.user.findUnique({ where: { id: actualReportedId } });
+    if (!reportedUser) return errorResponse(res, 404, 'User yang dilaporkan tidak ditemukan');
+  }
+
+  if (itemId) {
+    const item = await prisma.item.findUnique({ where: { id: itemId } });
+    if (!item) return errorResponse(res, 404, 'Barang yang dilaporkan tidak ditemukan');
+  }
 
   const report = await prisma.report.create({
-    data: { reporterId, reportedId, reason, description }
+    data: { reporterId, reportedId: actualReportedId, itemId, reason, description }
   });
 
   return successResponse(res, 201, 'Laporan berhasil dikirim. Admin akan segera memprosesnya.', report);
@@ -28,11 +39,20 @@ const getReports = asyncHandler(async (req, res) => {
   const reports = await prisma.report.findMany({
     include: {
       reporter: { select: { id: true, nama: true, email: true } },
-      reported: { select: { id: true, nama: true, email: true } }
+      reported: { select: { id: true, nama: true, email: true } },
+      item: { select: { id: true, namaBarang: true } }
     },
     orderBy: { createdAt: 'desc' }
   });
-  return successResponse(res, 200, 'Berhasil memuat laporan', reports);
+
+  // Map to add targetType and targetId for AdminReports
+  const mappedReports = reports.map(r => ({
+    ...r,
+    targetType: r.itemId ? 'ITEM' : 'USER',
+    targetId: r.itemId ? r.item.namaBarang : (r.reported?.nama || 'Unknown User')
+  }));
+
+  return successResponse(res, 200, 'Berhasil memuat laporan', mappedReports);
 });
 
 // PUT /api/reports/:id/status

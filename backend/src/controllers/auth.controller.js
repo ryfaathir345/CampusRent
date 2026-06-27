@@ -78,6 +78,12 @@ const register = asyncHandler(async (req, res) => {
 
   const token = generateToken(user.id, user.role);
 
+  // Simpan currentLoginToken setelah register agar perangkat lain tidak bisa sembarangan login
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { currentLoginToken: token }
+  });
+
   return successResponse(res, 201, 'Registrasi berhasil! Selamat bergabung.', {
     user: safeUser(user),
     token,
@@ -112,7 +118,28 @@ const login = asyncHandler(async (req, res) => {
     return errorResponse(res, 403, 'Akun Anda telah di-suspend oleh Admin.');
   }
 
+  // Check if there's an active login token
+  if (user.currentLoginToken) {
+    try {
+      jwt.verify(user.currentLoginToken, process.env.JWT_SECRET);
+      // If verification succeeds, token is still active and valid!
+      return errorResponse(res, 403, 'Akun ini sedang digunakan di perangkat lain. Harap log out terlebih dahulu.');
+    } catch (err) {
+      // If token verification fails (expired or invalid), it means the previous session is dead.
+      // We can safely allow login to proceed.
+    }
+  }
+
   const token = generateToken(user.id, user.role);
+
+  // Update last active AND the current login token
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      lastActiveAt: new Date(),
+      currentLoginToken: token
+    }
+  });
 
   return successResponse(res, 200, `Selamat datang kembali, ${user.nama.split(' ')[0]}!`, {
     user: safeUser(user),
@@ -126,8 +153,16 @@ const login = asyncHandler(async (req, res) => {
 // @access  Private
 // ─────────────────────────────────────────────
 const logout = asyncHandler(async (req, res) => {
-  // Karena JWT stateless, logout dilakukan di client dengan menghapus token.
-  // Endpoint ini hanya memberi konfirmasi server-side.
+  // Hapus currentLoginToken di database agar akun bisa dipakai login lagi
+  if (req.user && req.user.id) {
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: {
+        currentLoginToken: null
+      }
+    });
+  }
+
   return successResponse(res, 200, 'Berhasil keluar. Sampai jumpa!');
 });
 

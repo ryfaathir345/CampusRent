@@ -73,20 +73,28 @@ const getProfile = asyncHandler(async (req, res) => {
 
 // PUT /api/profile
 const updateProfile = asyncHandler(async (req, res) => {
-  const { nama, jurusan, universitas, whatsapp } = req.body;
+  const { nama, jurusan, universitas, whatsapp, isVerified } = req.body;
   const userId = req.user.id;
+  
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+
+  const dataToUpdate = {
+    ...(nama && { nama }),
+    ...(jurusan && { jurusan }),
+    ...(universitas && { universitas }),
+    ...(whatsapp && { whatsapp })
+  };
+
+  if (user.role === 'ADMIN' && typeof isVerified === 'boolean') {
+    dataToUpdate.isVerified = isVerified;
+  }
 
   const updatedUser = await prisma.user.update({
     where: { id: userId },
-    data: {
-      ...(nama && { nama }),
-      ...(jurusan && { jurusan }),
-      ...(universitas && { universitas }),
-      ...(whatsapp && { whatsapp })
-    },
+    data: dataToUpdate,
     select: {
       id: true, nama: true, nim: true, jurusan: true, universitas: true,
-      email: true, whatsapp: true, fotoProfil: true, role: true
+      email: true, whatsapp: true, fotoProfil: true, role: true, isVerified: true
     }
   });
 
