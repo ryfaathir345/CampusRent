@@ -10,6 +10,10 @@ RUN npm ci --legacy-peer-deps
 # Copy the rest of the application source code
 COPY . .
 
+# Pass VITE_API_URL from Railway build arguments to the environment for Vite
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
+
 # Build the frontend application
 RUN npm run build
 
