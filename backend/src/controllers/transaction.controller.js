@@ -38,7 +38,39 @@ const createRequest = asyncHandler(async (req, res) => {
 
   const basePrice = diffDays * item.hargaSewa;
   const adminFee = 5000;
-  const totalPrice = basePrice + adminFee;
+  let discountAmount = 0;
+  let promoId = null;
+
+  // Process Promo
+  const { promoCode } = req.body;
+  if (promoCode) {
+    const promo = await prisma.promo.findUnique({ where: { code: promoCode } });
+    
+    if (promo && promo.isActive && new Date() >= promo.startDate && new Date() <= promo.endDate) {
+      // Check if user already used this promo (ignore REJECTED)
+      const existingTransaction = await prisma.transaction.findFirst({
+        where: { borrowerId, promoId: promo.id, status: { not: 'REJECTED' } }
+      });
+      
+      if (!existingTransaction) {
+        promoId = promo.id;
+        let calculatedDiscount = Math.floor(basePrice * (promo.discountPercent / 100));
+        
+        if (promo.maxDiscount && calculatedDiscount > promo.maxDiscount) {
+          calculatedDiscount = promo.maxDiscount;
+        }
+        
+        // Ensure discount doesn't exceed basePrice
+        if (calculatedDiscount > basePrice) {
+          calculatedDiscount = basePrice;
+        }
+        
+        discountAmount = calculatedDiscount;
+      }
+    }
+  }
+
+  const totalPrice = (basePrice - discountAmount) + adminFee;
 
   // Cek apakah sebelumnya ada INQUIRY untuk item ini
   const existingInquiry = await prisma.transaction.findFirst({
@@ -54,6 +86,8 @@ const createRequest = asyncHandler(async (req, res) => {
         startDate: start,
         endDate: end,
         totalPrice,
+        promoId,
+        discountAmount,
         status: 'PENDING'
       }
     });
@@ -66,6 +100,8 @@ const createRequest = asyncHandler(async (req, res) => {
         startDate: start,
         endDate: end,
         totalPrice,
+        promoId,
+        discountAmount,
         status: 'PENDING'
       }
     });

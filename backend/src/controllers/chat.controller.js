@@ -98,7 +98,20 @@ const getMessages = asyncHandler(async (req, res) => {
     }
   });
 
-  return successResponse(res, 200, 'Berhasil memuat pesan', messages);
+  const formattedMessages = messages.map(msg => {
+    if (msg.isDeleted) {
+      return {
+        ...msg,
+        text: null,
+        imageUrl: null,
+        latitude: null,
+        longitude: null,
+      };
+    }
+    return msg;
+  });
+
+  return successResponse(res, 200, 'Berhasil memuat pesan', formattedMessages);
 });
 
 // POST /api/chat/:transactionId/messages
@@ -166,8 +179,65 @@ const sendMessage = asyncHandler(async (req, res) => {
   return successResponse(res, 201, 'Pesan terkirim', message);
 });
 
+// DELETE /api/chat/:transactionId/messages/:messageId
+const deleteMessage = asyncHandler(async (req, res) => {
+  const { transactionId, messageId } = req.params;
+  const userId = req.user.id;
+
+  const transaction = await prisma.transaction.findUnique({
+    where: { id: transactionId },
+    include: { item: true }
+  });
+
+  if (!transaction) return errorResponse(res, 404, 'Transaksi tidak ditemukan');
+  if (!checkParticipant(transaction, userId)) return errorResponse(res, 403, 'Akses ditolak');
+
+  const message = await prisma.message.findUnique({
+    where: { id: messageId }
+  });
+
+  if (!message) return errorResponse(res, 404, 'Pesan tidak ditemukan');
+  if (message.senderId !== userId) return errorResponse(res, 403, 'Hanya pengirim yang dapat menghapus pesan ini');
+
+  await prisma.message.update({
+    where: { id: messageId },
+    data: { isDeleted: true }
+  });
+
+  return successResponse(res, 200, 'Pesan berhasil dihapus');
+});
+
+// PUT /api/chat/:transactionId/messages/read
+const markAsRead = asyncHandler(async (req, res) => {
+  const { transactionId } = req.params;
+  const userId = req.user.id;
+
+  const transaction = await prisma.transaction.findUnique({
+    where: { id: transactionId },
+    include: { item: true, conversation: true }
+  });
+
+  if (!transaction) return errorResponse(res, 404, 'Transaksi tidak ditemukan');
+  if (!checkParticipant(transaction, userId)) return errorResponse(res, 403, 'Akses ditolak');
+
+  if (transaction.conversation) {
+    await prisma.message.updateMany({
+      where: {
+        conversationId: transaction.conversation.id,
+        senderId: { not: userId },
+        isRead: false
+      },
+      data: { isRead: true }
+    });
+  }
+
+  return successResponse(res, 200, 'Pesan ditandai sudah dibaca');
+});
+
 module.exports = {
   getConversations,
   getMessages,
-  sendMessage
+  sendMessage,
+  deleteMessage,
+  markAsRead
 };

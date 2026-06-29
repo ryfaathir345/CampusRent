@@ -49,7 +49,7 @@ const getUsers = asyncHandler(async (req, res) => {
   const users = await prisma.user.findMany({
     where: { role: { in: ['MAHASISWA', 'ADMIN'] } },
     select: {
-      id: true, nama: true, email: true, nim: true, jurusan: true, isSuspended: true, createdAt: true, role: true,
+      id: true, nama: true, email: true, nim: true, jurusan: true, isSuspended: true, isVerified: true, createdAt: true, role: true,
       items: {
         select: {
           id: true,

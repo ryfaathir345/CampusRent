@@ -1,37 +1,30 @@
-// src/pages/NotFound.jsx
-// 404 Not Found page
-
 import { Link } from 'react-router-dom';
-import { BookOpen, Home, Search } from 'lucide-react';
 
 const NotFound = () => {
-  return (
-    <div
-      className="min-h-screen flex flex-col items-center justify-center text-center px-6"
-      style={{ background: 'linear-gradient(160deg, #eff6ff 0%, #dbeafe 50%, #e0e7ff 100%)' }}
-    >
-      <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6"
-        style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)' }}>
-        <BookOpen size={30} color="white" />
-      </div>
+ return (
+ <div className="min-h-screen flex flex-col items-center justify-center text-center px-6 bg-surface">
+ <div className="w-24 h-24 rounded-3xl flex items-center justify-center mx-auto mb-8 bg-error-container/20 border border-error-container/50">
+ <span className="material-symbols-outlined text-[48px] text-error">sentiment_dissatisfied</span>
+ </div>
 
-      <h1 className="text-8xl font-bold gradient-text mb-4">404</h1>
-      <h2 className="text-2xl font-bold text-gray-900 mb-3">Halaman Tidak Ditemukan</h2>
-      <p className="text-gray-500 max-w-md mb-8">
-        Oops! Halaman yang kamu cari tidak ada atau sudah dipindahkan.
-        Yuk kembali ke beranda.
-      </p>
+ <h1 className="text-8xl md:text-9xl font-display-lg text-display-lg font-extrabold text-primary mb-4 drop-shadow-sm">404</h1>
+ <h2 className="text-3xl font-headline-lg text-headline-lg text-on-surface mb-4">Halaman Tidak Ditemukan</h2>
+ <p className="text-on-surface-variant font-body-lg text-body-lg max-w-md mx-auto mb-10">
+ Oops! Halaman yang kamu cari tidak ada atau sudah dipindahkan. Yuk kembali ke beranda.
+ </p>
 
-      <div className="flex gap-4 flex-wrap justify-center">
-        <Link to="/" className="btn-primary">
-          <Home size={16} /> Ke Beranda
-        </Link>
-        <Link to="/items" className="btn-secondary">
-          <Search size={16} /> Cari Barang
-        </Link>
-      </div>
-    </div>
-  );
+ <div className="flex flex-col sm:flex-row gap-4 justify-center w-full max-w-sm mx-auto">
+ <Link to="/" className="w-full sm:w-auto px-8 py-4 bg-primary text-on-primary font-title-md text-title-md rounded-xl hover:bg-primary-container transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20">
+ <span className="material-symbols-outlined text-[20px]">home</span>
+ Ke Beranda
+ </Link>
+ <Link to="/items" className="w-full sm:w-auto px-8 py-4 bg-transparent border-2 border-primary text-primary font-title-md text-title-md rounded-xl hover:bg-primary/5 transition-all flex items-center justify-center gap-2">
+ <span className="material-symbols-outlined text-[20px]">search</span>
+ Cari Barang
+ </Link>
+ </div>
+ </div>
+ );
 };
 
 export default NotFound;

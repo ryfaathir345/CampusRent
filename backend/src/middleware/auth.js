@@ -110,4 +110,11 @@ const isOwner = (req, res, next) => {
   next();
 };
 
-module.exports = { protect, restrictTo, isSelf, isAdmin, isOwner };
+const requireVerified = (req, res, next) => {
+  if (req.user && !req.user.isVerified) {
+    return errorResponse(res, 403, 'Harap verifikasi KTM terlebih dahulu untuk melakukan aksi ini.');
+  }
+  next();
+};
+
+module.exports = { protect, restrictTo, isSelf, isAdmin, isOwner, requireVerified };

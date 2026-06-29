@@ -11,7 +11,7 @@ const API_URL = import.meta.env.VITE_API_URL || '/api';
 const UPLOADS_URL = API_URL.replace('/api', '');
 
 const AdminFinance = () => {
-  const [activeTab, setActiveTab] = useState('profit'); // profit, verification, withdrawals
+  const [activeTab, setActiveTab] = useState('profit'); // profit, verification, withdrawals, topups
   const [isLoading, setIsLoading] = useState(true);
   
   const [payments, setPayments] = useState([]);
@@ -103,7 +103,7 @@ const AdminFinance = () => {
         head: [['Tanggal', 'Pendapatan (Laba Admin 10%)']],
         body: tableData,
         theme: 'grid',
-        headStyles: { fillColor: [99, 14, 212] }, // primary color
+        headStyles: { fillColor: [99, 14, 212] },
       });
 
       doc.save('Laporan_Pendapatan_CampusRent.pdf');
@@ -114,305 +114,272 @@ const AdminFinance = () => {
   };
 
   return (
-    <div className="animate-fade-in max-w-[1400px] mx-auto space-y-6">
-      {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between mb-6 gap-4">
-        <div>
-          <h2 className="font-bold text-gray-800 text-title-md dark:text-white/90 mb-1">Financial Oversight</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Monitor platform revenue, manage payouts, and verify transaction integrity.</p>
+    <div className="space-y-gutter bg-[#050811] text-on-primary-container p-6 rounded-2xl">
+      <style>{`
+        .glass-dark {
+          background: rgba(15, 23, 42, 0.8);
+          backdrop-filter: blur(24px);
+          border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .neon-border {
+          box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
+        }
+        .gold-gradient {
+          background: linear-gradient(135deg, #FFD700 0%, #B8860B 100%);
+        }
+      `}</style>
+      
+      {/* Top Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+        <div className="glass-dark rounded-xl p-stack-lg relative overflow-hidden group">
+          <div className="relative z-10">
+            <div className="flex justify-between items-start mb-stack-md">
+              <span className="text-label-md font-bold text-surface-variant/80 uppercase tracking-widest">Saldo Platform</span>
+              <span className="material-symbols-outlined text-[#00F3FF] neon-border rounded-full p-2 bg-[#00F3FF]/10">account_balance_wallet</span>
+            </div>
+            <h2 className="font-display-lg text-display-lg text-white mb-stack-xs">Rp {(revenue.totalRevenue * 10).toLocaleString('id-ID')}</h2>
+            <div className="flex items-center gap-2 text-secondary-fixed-dim font-label-md">
+              <span className="material-symbols-outlined text-sm">trending_up</span>
+              <span>Total Volume</span>
+            </div>
+          </div>
         </div>
-        <div className="flex gap-3">
-          <button 
-            onClick={handleExportFinancePDF}
-            className="flex items-center gap-2 px-6 py-2.5 bg-brand-500 text-white rounded-full font-medium text-sm shadow-theme-md hover:bg-brand-600 transition-all active:scale-95"
-          >
-            <span className="material-symbols-outlined text-[20px]">file_download</span>
-            Export PDF
-          </button>
+        
+        <div className="glass-dark rounded-xl p-stack-lg relative overflow-hidden group">
+          <div className="absolute inset-0 gold-gradient opacity-5"></div>
+          <div className="relative z-10">
+            <div className="flex justify-between items-start mb-stack-md">
+              <span className="text-label-md font-bold text-[#FFD700]/80 uppercase tracking-widest">Total Komisi</span>
+              <span className="material-symbols-outlined text-[#FFD700] neon-border rounded-full p-2 bg-[#FFD700]/10">auto_graph</span>
+            </div>
+            <h2 className="font-display-lg text-display-lg text-white mb-stack-xs">Rp {revenue.totalRevenue.toLocaleString('id-ID')}</h2>
+            <div className="flex items-center gap-2 text-[#FFD700] font-label-md">
+              <span className="material-symbols-outlined text-sm">stars</span>
+              <span>Fee 10% Terakumulasi</span>
+            </div>
+          </div>
+        </div>
+        
+        <div className="glass-dark rounded-xl p-stack-lg relative overflow-hidden group border-l-4 border-error/50">
+          <div className="relative z-10">
+            <div className="flex justify-between items-start mb-stack-md">
+              <span className="text-label-md font-bold text-error/80 uppercase tracking-widest">Permintaan WD</span>
+              <span className="material-symbols-outlined text-error neon-border rounded-full p-2 bg-error/10">pending_actions</span>
+            </div>
+            <h2 className="font-display-lg text-display-lg text-white mb-stack-xs">{withdrawals.length || 0} <span className="text-headline-lg font-normal opacity-50">Pending</span></h2>
+            <div className="flex items-center gap-2 text-error font-label-md">
+              <span className="material-symbols-outlined text-sm">timer</span>
+              <span className="animate-pulse">Segera Proses Transaksi</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Tabbed Navigation */}
-      <div className="flex border-b border-gray-200 dark:border-gray-800 mb-6 overflow-x-auto no-scrollbar">
-        <button 
-          onClick={() => setActiveTab('profit')}
-          className={`px-8 py-4 text-sm font-medium transition-all whitespace-nowrap relative ${activeTab === 'profit' ? 'text-brand-500' : 'text-gray-500 dark:text-gray-400 hover:text-brand-500 dark:hover:text-brand-400'}`}
-        >
-          Platform Profit
-          {activeTab === 'profit' && <span className="absolute bottom-[-1px] left-0 w-full h-[2px] bg-brand-500 rounded-t-full"></span>}
-        </button>
-        <button 
-          onClick={() => setActiveTab('verification')}
-          className={`px-8 py-4 text-sm font-medium transition-all whitespace-nowrap relative ${activeTab === 'verification' ? 'text-brand-500' : 'text-gray-500 dark:text-gray-400 hover:text-brand-500 dark:hover:text-brand-400'}`}
-        >
-          Payment Verification
-          {activeTab === 'verification' && <span className="absolute bottom-[-1px] left-0 w-full h-[2px] bg-brand-500 rounded-t-full"></span>}
-        </button>
-        <button 
-          onClick={() => setActiveTab('withdrawals')}
-          className={`px-8 py-4 text-sm font-medium transition-all whitespace-nowrap relative ${activeTab === 'withdrawals' ? 'text-brand-500' : 'text-gray-500 dark:text-gray-400 hover:text-brand-500 dark:hover:text-brand-400'}`}
-        >
-          Withdrawal Requests
-          {activeTab === 'withdrawals' && <span className="absolute bottom-[-1px] left-0 w-full h-[2px] bg-brand-500 rounded-t-full"></span>}
-        </button>
-        <button 
-          onClick={() => setActiveTab('topups')}
-          className={`px-8 py-4 text-sm font-medium transition-all whitespace-nowrap relative ${activeTab === 'topups' ? 'text-brand-500' : 'text-gray-500 dark:text-gray-400 hover:text-brand-500 dark:hover:text-brand-400'}`}
-        >
-          Top Up Verification
-          {activeTab === 'topups' && <span className="absolute bottom-[-1px] left-0 w-full h-[2px] bg-brand-500 rounded-t-full"></span>}
-        </button>
+      {/* Analytics Graph Section */}
+      <div className="glass-dark rounded-xl p-stack-lg border border-white/10 shadow-xl">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-stack-lg gap-stack-md">
+          <div>
+            <h3 className="font-headline-lg text-headline-lg text-white">Revenue Growth</h3>
+            <p className="text-body-md text-surface-variant/60">Pertumbuhan pendapatan platform</p>
+          </div>
+          <div className="flex gap-stack-sm bg-surface-container-low/20 p-stack-xs rounded-lg">
+            <button onClick={handleExportFinancePDF} className="flex items-center gap-2 px-4 py-1.5 text-label-md bg-primary-container rounded-md text-white">
+              <span className="material-symbols-outlined text-[18px]">download</span> Export PDF
+            </button>
+          </div>
+        </div>
+        
+        <div className="h-64 w-full relative">
+          {revenue.chartData && revenue.chartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={revenue.chartData}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffffff" strokeOpacity={0.1} />
+                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#8A99AF', fontSize: 12 }} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#8A99AF', fontSize: 12 }} dx={-10} tickFormatter={(value) => `Rp${value/1000}k`} />
+                <Tooltip 
+                  contentStyle={{ borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', backgroundColor: 'rgba(15, 23, 42, 0.9)', color: '#fff' }}
+                  formatter={(value) => [`Rp ${value.toLocaleString('id-ID')}`, 'Pendapatan']}
+                />
+                <Line type="monotone" dataKey="revenue" stroke="#00F3FF" strokeWidth={3} dot={{ r: 4, strokeWidth: 2, fill: '#050811', stroke: '#00F3FF' }} activeDot={{ r: 6, fill: '#00F3FF', stroke: '#fff' }} />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-full text-surface-variant/40">Belum ada data pendapatan</div>
+          )}
+        </div>
       </div>
 
-      {isLoading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin h-10 w-10 border-b-2 border-brand-500 rounded-full"></div>
+      {/* Ledger Table Section */}
+      <div className="glass-dark rounded-xl border border-white/5 overflow-hidden mt-6">
+        <div className="p-stack-lg border-b border-white/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-stack-md">
+          <div>
+            <h3 className="font-title-md text-title-md text-white">Log Transaksi Platform</h3>
+            <p className="text-label-md text-surface-variant/60">Data real-time aliran dana CampusRent</p>
+          </div>
+          <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2 md:pb-0">
+            <button 
+              onClick={() => setActiveTab('profit')}
+              className={`px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-all ${activeTab === 'profit' ? 'bg-white/20 text-white' : 'bg-white/5 text-surface-variant/60 hover:bg-white/10'}`}
+            >
+              Semua
+            </button>
+            <button 
+              onClick={() => setActiveTab('verification')}
+              className={`px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-all ${activeTab === 'verification' ? 'bg-white/20 text-white' : 'bg-white/5 text-surface-variant/60 hover:bg-white/10'}`}
+            >
+              Pembayaran
+            </button>
+            <button 
+              onClick={() => setActiveTab('withdrawals')}
+              className={`px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-all ${activeTab === 'withdrawals' ? 'bg-white/20 text-white' : 'bg-white/5 text-surface-variant/60 hover:bg-white/10'}`}
+            >
+              Penarikan
+            </button>
+            <button 
+              onClick={() => setActiveTab('topups')}
+              className={`px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-all ${activeTab === 'topups' ? 'bg-white/20 text-white' : 'bg-white/5 text-surface-variant/60 hover:bg-white/10'}`}
+            >
+              Top Up
+            </button>
+          </div>
         </div>
-      ) : (
-        <>
-          {/* Platform Profit Tab */}
-          {activeTab === 'profit' && (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6">
-              {/* Summary Bento Grid */}
-              <div className="lg:col-span-4 space-y-4 md:space-y-6">
-                {/* Total Earnings Card */}
-                <div className="bg-white dark:bg-white/[0.03] p-6 rounded-2xl shadow-theme-sm border border-gray-200 dark:border-gray-800 overflow-hidden relative group">
-                  <div className="absolute top-0 right-0 p-4 opacity-5 dark:opacity-10 group-hover:opacity-10 dark:group-hover:opacity-20 transition-opacity">
-                    <span className="material-symbols-outlined text-[80px] text-brand-500">payments</span>
-                  </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-widest font-bold mb-2">Total Earnings</p>
-                  <h3 className="font-bold text-title-xl2 text-brand-500 dark:text-brand-400 mb-4">Rp {revenue.totalRevenue.toLocaleString('id-ID')}</h3>
-                  <div className="flex items-center gap-2 text-success-500 text-xs font-medium">
-                    <span className="material-symbols-outlined text-[18px]">trending_up</span>
-                    <span>10% Admin Fee applied</span>
-                  </div>
-                </div>
 
-                <div className="bg-white dark:bg-white/[0.03] p-6 rounded-2xl shadow-theme-sm border border-gray-200 dark:border-gray-800 border-l-4 border-l-warning-500 dark:border-l-warning-400">
-                  <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-widest font-bold mb-2">Recent Payouts</p>
-                  <div className="flex justify-between items-end">
-                    <h3 className="font-bold text-title-lg text-gray-800 dark:text-white/90">Stable</h3>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">Processed automatically</span>
-                  </div>
-                </div>
-              </div>
+        {isLoading ? (
+          <div className="flex justify-center items-center p-10">
+            <div className="animate-spin h-8 w-8 border-b-2 border-[#00F3FF] rounded-full"></div>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-white/5 text-label-sm text-surface-variant/60 uppercase tracking-tighter">
+                <tr>
+                  <th className="px-stack-lg py-4">Informasi Transaksi</th>
+                  <th className="px-stack-lg py-4">Tipe</th>
+                  <th className="px-stack-lg py-4">Pengguna</th>
+                  <th className="px-stack-lg py-4">Nominal</th>
+                  <th className="px-stack-lg py-4 text-center">Status</th>
+                  <th className="px-stack-lg py-4 text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5 text-body-md text-surface-variant">
+                
+                {/* Verification Tab Content */}
+                {activeTab === 'verification' && payments.map(p => (
+                  <tr key={`p-${p.id}`} className="hover:bg-white/5 transition-colors group">
+                    <td className="px-stack-lg py-4">
+                      <div className="font-mono text-primary-fixed-dim text-sm">#{p.id.substring(0,8).toUpperCase()}</div>
+                      <div className="text-xs mt-1 text-surface-variant/60">{p.transaction.item.namaBarang}</div>
+                    </td>
+                    <td className="px-stack-lg py-4">
+                      <span className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-secondary-fixed"></span> Pembayaran
+                      </span>
+                    </td>
+                    <td className="px-stack-lg py-4 text-white text-sm">{p.transaction.borrower.nama}</td>
+                    <td className="px-stack-lg py-4 text-white font-medium">Rp {p.amount.toLocaleString('id-ID')}</td>
+                    <td className="px-stack-lg py-4 text-center">
+                      <span className="px-3 py-1 rounded-full bg-error-container/20 text-error text-label-sm">Pending</span>
+                    </td>
+                    <td className="px-stack-lg py-4 text-right">
+                      <div className="flex justify-end gap-2">
+                        {p.proofOfPayment && (
+                          <button onClick={() => setImageModal({ isOpen: true, url: `${UPLOADS_URL}${p.proofOfPayment}` })} className="px-3 py-1.5 bg-white/10 text-white rounded-md text-xs hover:bg-white/20 transition-colors">Bukti</button>
+                        )}
+                        <button onClick={() => handleVerifyPayment(p.id, 'approve')} className="px-3 py-1.5 bg-secondary-container/20 text-secondary-container rounded-md text-xs hover:bg-secondary-container/40 transition-colors">Setujui</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
 
-              {/* Main Revenue Chart */}
-              <div className="lg:col-span-8">
-                <div className="bg-white dark:bg-white/[0.03] p-6 rounded-2xl shadow-theme-sm border border-gray-200 dark:border-gray-800 h-full min-h-[400px] flex flex-col">
-                  <div className="flex justify-between items-start mb-8">
-                    <div>
-                      <h4 className="font-bold text-title-sm text-gray-800 dark:text-white/90">Income Trends</h4>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Aggregated revenue from platform fees</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex-1 w-full relative -ml-4">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={revenue.chartData}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ccc3d8" strokeOpacity={0.2} />
-                        <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#8A99AF', fontSize: 12 }} dy={10} />
-                        <YAxis axisLine={false} tickLine={false} tick={{ fill: '#8A99AF', fontSize: 12 }} dx={-10} tickFormatter={(value) => `Rp${value/1000}k`} />
-                        <Tooltip 
-                          contentStyle={{ borderRadius: '12px', border: '1px solid #E2E8F0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', backgroundColor: '#fff' }}
-                          formatter={(value) => [`Rp ${value.toLocaleString('id-ID')}`, 'Pendapatan']}
-                        />
-                        <Line type="monotone" dataKey="revenue" stroke="#3C50E0" strokeWidth={3} dot={{ r: 4, strokeWidth: 2, fill: '#fff', stroke: '#3C50E0' }} activeDot={{ r: 6, fill: '#3C50E0', stroke: '#fff' }} />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+                {/* Withdrawals Tab Content */}
+                {activeTab === 'withdrawals' && withdrawals.map(w => (
+                  <tr key={`w-${w.id}`} className="hover:bg-white/5 transition-colors group">
+                    <td className="px-stack-lg py-4">
+                      <div className="font-mono text-primary-fixed-dim text-sm">#{w.id.substring(0,8).toUpperCase()}</div>
+                      <div className="text-xs mt-1 text-surface-variant/60">{w.bankName} - {w.accountNumber}</div>
+                    </td>
+                    <td className="px-stack-lg py-4">
+                      <span className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-error"></span> Penarikan
+                      </span>
+                    </td>
+                    <td className="px-stack-lg py-4 text-white text-sm">{w.user.nama}</td>
+                    <td className="px-stack-lg py-4 text-white font-medium">Rp {w.amount.toLocaleString('id-ID')}</td>
+                    <td className="px-stack-lg py-4 text-center">
+                      <span className="px-3 py-1 rounded-full bg-error-container/20 text-error text-label-sm">Pending</span>
+                    </td>
+                    <td className="px-stack-lg py-4 text-right">
+                      <button onClick={() => handleProcessWithdrawal(w.id, 'approve')} className="px-3 py-1.5 bg-secondary-container/20 text-secondary-container rounded-md text-xs hover:bg-secondary-container/40 transition-colors">Setujui</button>
+                    </td>
+                  </tr>
+                ))}
 
-          {/* Payment Verification Tab */}
-          {activeTab === 'verification' && (
-            <div className="bg-white dark:bg-white/[0.03] rounded-2xl shadow-theme-sm border border-gray-200 dark:border-gray-800 overflow-hidden">
-              <div className="p-6 border-b border-gray-200 dark:border-gray-800">
-                <h4 className="font-bold text-title-sm text-gray-800 dark:text-white/90">Menunggu Verifikasi Pembayaran</h4>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
-                    <tr>
-                      <th className="px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Peminjam</th>
-                      <th className="px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Barang</th>
-                      <th className="px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Harga</th>
-                      <th className="px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Metode</th>
-                      <th className="px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Bukti</th>
-                      <th className="px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                    {payments.length === 0 ? (
-                      <tr>
-                        <td colSpan="6" className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Tidak ada pembayaran yang menunggu verifikasi.</td>
-                      </tr>
-                    ) : payments.map(p => (
-                      <tr key={p.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                        <td className="px-6 py-4">
-                          <p className="text-sm font-medium text-gray-800 dark:text-white/90">{p.transaction.borrower.nama}</p>
-                        </td>
-                        <td className="px-6 py-4">
-                          <p className="text-sm font-medium text-gray-800 dark:text-white/90">{p.transaction.item.namaBarang}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Pemilik: {p.transaction.item.owner.nama}</p>
-                        </td>
-                        <td className="px-6 py-4 text-sm font-bold text-gray-800 dark:text-white/90">Rp {p.amount.toLocaleString('id-ID')}</td>
-                        <td className="px-6 py-4">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">{p.paymentMethod}</span>
-                        </td>
-                        <td className="px-6 py-4">
-                          {p.proofOfPayment ? (
-                            <button onClick={() => setImageModal({ isOpen: true, url: `${UPLOADS_URL}${p.proofOfPayment}` })} className="text-brand-500 hover:text-brand-600 dark:text-brand-400 dark:hover:text-brand-300 text-sm font-medium flex items-center gap-1 transition-colors">
-                              <span className="material-symbols-outlined text-[16px]">receipt</span> Lihat Bukti
-                            </button>
-                          ) : (
-                            <span className="text-gray-400 dark:text-gray-500 italic text-sm">Tidak ada bukti</span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex justify-end gap-2">
-                            <button onClick={() => handleVerifyPayment(p.id, 'approve')} className="px-4 py-1.5 bg-success-50 text-success-600 hover:bg-success-100 dark:bg-success-500/10 dark:text-success-500 dark:hover:bg-success-500/20 font-medium text-xs rounded-full transition-colors active:scale-95 border border-success-200 dark:border-success-500/30">Setujui</button>
-                            <button onClick={() => handleVerifyPayment(p.id, 'reject')} className="px-4 py-1.5 bg-error-50 text-error-600 hover:bg-error-100 dark:bg-error-500/10 dark:text-error-500 dark:hover:bg-error-500/20 font-medium text-xs rounded-full transition-colors active:scale-95 border border-error-200 dark:border-error-500/30">Tolak</button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
+                {/* Topups Tab Content */}
+                {activeTab === 'topups' && topUps.map(t => (
+                  <tr key={`t-${t.id}`} className="hover:bg-white/5 transition-colors group">
+                    <td className="px-stack-lg py-4">
+                      <div className="font-mono text-primary-fixed-dim text-sm">#{t.id.substring(0,8).toUpperCase()}</div>
+                      <div className="text-xs mt-1 text-surface-variant/60">{new Date(t.createdAt).toLocaleDateString('id-ID')}</div>
+                    </td>
+                    <td className="px-stack-lg py-4">
+                      <span className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-[#00F3FF]"></span> Top Up
+                      </span>
+                    </td>
+                    <td className="px-stack-lg py-4 text-white text-sm">{t.user.nama}</td>
+                    <td className="px-stack-lg py-4 text-white font-medium">Rp {t.amount.toLocaleString('id-ID')}</td>
+                    <td className="px-stack-lg py-4 text-center">
+                      <span className="px-3 py-1 rounded-full bg-error-container/20 text-error text-label-sm">Pending</span>
+                    </td>
+                    <td className="px-stack-lg py-4 text-right">
+                      <div className="flex justify-end gap-2">
+                        {t.buktiUrl && (
+                          <button onClick={() => setImageModal({ isOpen: true, url: `${UPLOADS_URL}${t.buktiUrl}` })} className="px-3 py-1.5 bg-white/10 text-white rounded-md text-xs hover:bg-white/20 transition-colors">Bukti</button>
+                        )}
+                        <button onClick={() => handleProcessTopUp(t.id, 'approve')} className="px-3 py-1.5 bg-secondary-container/20 text-secondary-container rounded-md text-xs hover:bg-secondary-container/40 transition-colors">Setujui</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
 
-          {/* Withdrawal Requests Tab */}
-          {activeTab === 'withdrawals' && (
-            <div className="bg-white dark:bg-white/[0.03] rounded-2xl shadow-theme-sm border border-gray-200 dark:border-gray-800 overflow-hidden">
-              <div className="p-6 border-b border-gray-200 dark:border-gray-800">
-                <h4 className="font-bold text-title-sm text-gray-800 dark:text-white/90">Menunggu Proses Penarikan Dana</h4>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
-                    <tr>
-                      <th className="px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Pengguna</th>
-                      <th className="px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Jumlah</th>
-                      <th className="px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Informasi Bank</th>
-                      <th className="px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tanggal Request</th>
-                      <th className="px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                    {withdrawals.length === 0 ? (
-                      <tr>
-                        <td colSpan="5" className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Tidak ada permintaan penarikan dana.</td>
-                      </tr>
-                    ) : withdrawals.map(w => (
-                      <tr key={w.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                        <td className="px-6 py-4">
-                          <p className="text-sm font-medium text-gray-800 dark:text-white/90">{w.user.nama}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{w.user.email}</p>
-                        </td>
-                        <td className="px-6 py-4 text-sm font-bold text-gray-800 dark:text-white/90">Rp {w.amount.toLocaleString('id-ID')}</td>
-                        <td className="px-6 py-4">
-                          <p className="text-sm font-medium text-gray-800 dark:text-white/90">{w.bankName} - {w.accountNumber}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">a.n {w.accountName}</p>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                          {new Date(w.createdAt).toLocaleDateString('id-ID')}
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex justify-end gap-2">
-                            <button onClick={() => handleProcessWithdrawal(w.id, 'approve')} className="px-4 py-1.5 bg-success-50 text-success-600 hover:bg-success-100 dark:bg-success-500/10 dark:text-success-500 dark:hover:bg-success-500/20 font-medium text-xs rounded-full transition-colors active:scale-95 border border-success-200 dark:border-success-500/30">Selesai Proses</button>
-                            <button onClick={() => handleProcessWithdrawal(w.id, 'reject')} className="px-4 py-1.5 bg-error-50 text-error-600 hover:bg-error-100 dark:bg-error-500/10 dark:text-error-500 dark:hover:bg-error-500/20 font-medium text-xs rounded-full transition-colors active:scale-95 border border-error-200 dark:border-error-500/30">Tolak</button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {/* Top Up Requests Tab */}
-          {activeTab === 'topups' && (
-            <div className="bg-white dark:bg-white/[0.03] rounded-2xl shadow-theme-sm border border-gray-200 dark:border-gray-800 overflow-hidden">
-              <div className="p-6 border-b border-gray-200 dark:border-gray-800">
-                <h4 className="font-bold text-title-sm text-gray-800 dark:text-white/90">Menunggu Verifikasi Top Up Saldo</h4>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
-                    <tr>
-                      <th className="px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Pengguna</th>
-                      <th className="px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Jumlah</th>
-                      <th className="px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Bukti Transfer</th>
-                      <th className="px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tanggal Request</th>
-                      <th className="px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                    {topUps.length === 0 ? (
-                      <tr>
-                        <td colSpan="5" className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Tidak ada permintaan top up saldo.</td>
-                      </tr>
-                    ) : topUps.map(t => (
-                      <tr key={t.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                        <td className="px-6 py-4">
-                          <p className="text-sm font-medium text-gray-800 dark:text-white/90">{t.user.nama}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t.user.email}</p>
-                        </td>
-                        <td className="px-6 py-4 text-sm font-bold text-success-500 dark:text-success-400">+ Rp {t.amount.toLocaleString('id-ID')}</td>
-                        <td className="px-6 py-4">
-                          {t.buktiUrl ? (
-                            <button onClick={() => setImageModal({ isOpen: true, url: `${UPLOADS_URL}${t.buktiUrl}` })} className="text-brand-500 hover:text-brand-600 dark:text-brand-400 dark:hover:text-brand-300 text-sm font-medium flex items-center gap-1 transition-colors">
-                              <span className="material-symbols-outlined text-[16px]">receipt</span> Lihat Bukti
-                            </button>
-                          ) : (
-                            <span className="text-gray-400 dark:text-gray-500 italic text-sm">Tidak ada bukti</span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                          {new Date(t.createdAt).toLocaleDateString('id-ID')}
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex justify-end gap-2">
-                            <button onClick={() => handleProcessTopUp(t.id, 'approve')} className="px-4 py-1.5 bg-success-50 text-success-600 hover:bg-success-100 dark:bg-success-500/10 dark:text-success-500 dark:hover:bg-success-500/20 font-medium text-xs rounded-full transition-colors active:scale-95 border border-success-200 dark:border-success-500/30">Setujui</button>
-                            <button onClick={() => handleProcessTopUp(t.id, 'reject')} className="px-4 py-1.5 bg-error-50 text-error-600 hover:bg-error-100 dark:bg-error-500/10 dark:text-error-500 dark:hover:bg-error-500/20 font-medium text-xs rounded-full transition-colors active:scale-95 border border-error-200 dark:border-error-500/30">Tolak</button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-        </>
-      )}
+                {/* Empty State */}
+                {((activeTab === 'verification' && payments.length === 0) || 
+                  (activeTab === 'withdrawals' && withdrawals.length === 0) || 
+                  (activeTab === 'topups' && topUps.length === 0) || 
+                  activeTab === 'profit') && (
+                  <tr>
+                    <td colSpan="6" className="px-stack-lg py-8 text-center text-surface-variant/60">
+                      {activeTab === 'profit' ? 'Pilih tab untuk melihat antrian transaksi tertunda' : 'Tidak ada transaksi yang menunggu'}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
       {/* Image View Modal */}
       {imageModal.isOpen && createPortal(
         <div 
-          className="fixed inset-0 bg-gray-900/80 backdrop-blur-sm z-[99999] flex items-center justify-center p-4"
+          className="fixed inset-0 bg-[#050811]/90 backdrop-blur-md z-[99999] flex items-center justify-center p-4"
           onClick={() => setImageModal({ isOpen: false, url: '' })}
         >
           <div 
-            className="bg-white dark:bg-gray-900 rounded-2xl max-w-2xl w-full overflow-hidden shadow-2xl relative flex flex-col max-h-[90vh] border border-gray-200 dark:border-gray-800"
+            className="glass-dark rounded-2xl max-w-2xl w-full overflow-hidden shadow-2xl relative flex flex-col max-h-[90vh]"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 shrink-0">
-              <h3 className="font-bold text-title-sm text-gray-800 dark:text-white/90">Bukti Transfer</h3>
+            <div className="flex justify-between items-center p-4 border-b border-white/10 shrink-0">
+              <h3 className="font-bold text-title-sm text-white">Bukti Transfer</h3>
               <button 
                 onClick={() => setImageModal({ isOpen: false, url: '' })} 
-                className="p-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-full text-gray-500 dark:text-gray-400 transition-colors cursor-pointer"
+                className="p-2 hover:bg-white/10 rounded-full text-white transition-colors cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[24px] block">close</span>
               </button>
             </div>
-            <div className="p-4 flex-1 min-h-0 flex items-center justify-center bg-gray-100 dark:bg-gray-950 overflow-auto">
-              <img src={imageModal.url} alt="Bukti Transfer" className="max-w-full h-auto rounded-lg object-contain shadow-theme-md" />
+            <div className="p-4 flex-1 min-h-0 flex items-center justify-center overflow-auto">
+              <img src={imageModal.url} alt="Bukti Transfer" className="max-w-full h-auto rounded-lg object-contain shadow-2xl" />
             </div>
           </div>
         </div>,

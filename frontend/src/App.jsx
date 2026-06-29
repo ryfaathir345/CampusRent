@@ -35,275 +35,277 @@ import AdminTransactions from './pages/admin/AdminTransactions';
 import AdminCategories from './pages/admin/AdminCategories';
 import AdminReports from './pages/admin/AdminReports';
 import AdminProfile from './pages/admin/AdminProfile';
+import AdminPromos from './pages/admin/AdminPromos';
 
 // ─── Protected Route wrapper ──────────────────
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, isLoading } = useAuth();
-  
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="flex flex-col items-center gap-4">
-          <div className="animate-spin h-10 w-10 border-b-2 border-blue-600 rounded-full"></div>
-          <p className="text-gray-400 text-sm font-medium">Memuat...</p>
-        </div>
-      </div>
-    );
-  }
+ const { isAuthenticated, isLoading } = useAuth();
+ 
+ if (isLoading) {
+ return (
+ <div className="min-h-screen flex items-center justify-center bg-gray-50">
+ <div className="flex flex-col items-center gap-4">
+ <div className="animate-spin h-10 w-10 border-b-2 border-blue-600 rounded-full"></div>
+ <p className="text-gray-400 text-sm font-medium">Memuat...</p>
+ </div>
+ </div>
+ );
+ }
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
+ if (!isAuthenticated) {
+ return <Navigate to="/login" replace />;
+ }
 
-  return children;
+ return children;
 };
 
 // ─── Admin Route wrapper ──────────────────
 const AdminRoute = ({ children }) => {
-  const { isAuthenticated, isLoading, user } = useAuth();
-  
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin h-10 w-10 border-b-2 border-blue-600 rounded-full"></div>
-      </div>
-    );
-  }
+ const { isAuthenticated, isLoading, user } = useAuth();
+ 
+ if (isLoading) {
+ return (
+ <div className="min-h-screen flex items-center justify-center bg-gray-50">
+ <div className="animate-spin h-10 w-10 border-b-2 border-blue-600 rounded-full"></div>
+ </div>
+ );
+ }
 
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
-  if (user?.role !== 'ADMIN' && user?.role !== 'admin' && user?.role !== 'OWNER' && user?.role !== 'owner') return <Navigate to="/" replace />;
-  
-  return children;
+ if (!isAuthenticated) return <Navigate to="/login" replace />;
+ if (user?.role !== 'ADMIN' && user?.role !== 'admin' && user?.role !== 'OWNER' && user?.role !== 'owner') return <Navigate to="/" replace />;
+ 
+ return children;
 };
 
 // ─── Guest Route wrapper (redirect if already logged in) ──
 const GuestRoute = ({ children }) => {
-  const { isAuthenticated, isLoading } = useAuth();
+ const { isAuthenticated, isLoading } = useAuth();
 
-  if (isLoading) return null;
-  if (isAuthenticated) return <Navigate to="/" replace />;
+ if (isLoading) return null;
+ if (isAuthenticated) return <Navigate to="/" replace />;
 
-  return children;
+ return children;
 };
 
 // ─── App Routes ──────────────────────────────
 const AppRoutes = () => {
-  return (
-    <Routes>
-      {/* Public routes with MainLayout */}
-      <Route
-        path="/"
-        element={
-          <MainLayout>
-            <Home />
-          </MainLayout>
-        }
-      />
-      <Route
-        path="/items"
-        element={
-          <MainLayout>
-            <Items />
-          </MainLayout>
-        }
-      />
-      <Route
-        path="/items/:id"
-        element={
-          <MainLayout>
-            <ItemDetail />
-          </MainLayout>
-        }
-      />
+ return (
+ <Routes>
+ {/* Public routes with MainLayout */}
+ <Route
+ path="/"
+ element={
+ <MainLayout>
+ <Home />
+ </MainLayout>
+ }
+ />
+ <Route
+ path="/items"
+ element={
+ <MainLayout>
+ <Items />
+ </MainLayout>
+ }
+ />
+ <Route
+ path="/items/:id"
+ element={
+ <MainLayout>
+ <ItemDetail />
+ </MainLayout>
+ }
+ />
 
-      {/* Protected routes */}
-      <Route
-        path="/my-items"
-        element={
-          <ProtectedRoute>
-            <MainLayout>
-              <MyItems />
-            </MainLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/my-items/create"
-        element={
-          <ProtectedRoute>
-            <MainLayout>
-              <ItemForm />
-            </MainLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/transactions"
-        element={
-          <ProtectedRoute>
-            <MainLayout>
-              <Transactions />
-            </MainLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <MainLayout>
-              <Dashboard />
-            </MainLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/chat"
-        element={
-          <ProtectedRoute>
-            <MainLayout>
-              <Chat />
-            </MainLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/profile"
-        element={
-          <ProtectedRoute>
-            <MainLayout>
-              <Profile />
-            </MainLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/wishlist"
-        element={
-          <ProtectedRoute>
-            <MainLayout>
-              <Wishlist />
-            </MainLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/wallet"
-        element={
-          <ProtectedRoute>
-            <MainLayout>
-              <Wallet />
-            </MainLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/my-items/edit/:id"
-        element={
-          <ProtectedRoute>
-            <MainLayout>
-              <ItemForm />
-            </MainLayout>
-          </ProtectedRoute>
-        }
-      />
+ {/* Protected routes */}
+ <Route
+ path="/my-items"
+ element={
+ <ProtectedRoute>
+ <MainLayout>
+ <MyItems />
+ </MainLayout>
+ </ProtectedRoute>
+ }
+ />
+ <Route
+ path="/my-items/create"
+ element={
+ <ProtectedRoute>
+ <MainLayout>
+ <ItemForm />
+ </MainLayout>
+ </ProtectedRoute>
+ }
+ />
+ <Route
+ path="/transactions"
+ element={
+ <ProtectedRoute>
+ <MainLayout>
+ <Transactions />
+ </MainLayout>
+ </ProtectedRoute>
+ }
+ />
+ <Route
+ path="/dashboard"
+ element={
+ <ProtectedRoute>
+ <MainLayout>
+ <Dashboard />
+ </MainLayout>
+ </ProtectedRoute>
+ }
+ />
+ <Route
+ path="/chat"
+ element={
+ <ProtectedRoute>
+ <MainLayout>
+ <Chat />
+ </MainLayout>
+ </ProtectedRoute>
+ }
+ />
+ <Route
+ path="/profile"
+ element={
+ <ProtectedRoute>
+ <MainLayout>
+ <Profile />
+ </MainLayout>
+ </ProtectedRoute>
+ }
+ />
+ <Route
+ path="/wishlist"
+ element={
+ <ProtectedRoute>
+ <MainLayout>
+ <Wishlist />
+ </MainLayout>
+ </ProtectedRoute>
+ }
+ />
+ <Route
+ path="/wallet"
+ element={
+ <ProtectedRoute>
+ <MainLayout>
+ <Wallet />
+ </MainLayout>
+ </ProtectedRoute>
+ }
+ />
+ <Route
+ path="/my-items/edit/:id"
+ element={
+ <ProtectedRoute>
+ <MainLayout>
+ <ItemForm />
+ </MainLayout>
+ </ProtectedRoute>
+ }
+ />
 
-      {/* Auth routes — no layout (full-page forms) */}
-      <Route
-        path="/login"
-        element={
-          <GuestRoute>
-            <Login />
-          </GuestRoute>
-        }
-      />
-      <Route
-        path="/register"
-        element={
-          <GuestRoute>
-            <Register />
-          </GuestRoute>
-        }
-      />
-      <Route
-        path="/forgot-password"
-        element={
-          <GuestRoute>
-            <ForgotPassword />
-          </GuestRoute>
-        }
-      />
-      <Route
-        path="/reset-password/:token"
-        element={
-          <GuestRoute>
-            <ResetPassword />
-          </GuestRoute>
-        }
-      />
+ {/* Auth routes — no layout (full-page forms) */}
+ <Route
+ path="/login"
+ element={
+ <GuestRoute>
+ <Login />
+ </GuestRoute>
+ }
+ />
+ <Route
+ path="/register"
+ element={
+ <GuestRoute>
+ <Register />
+ </GuestRoute>
+ }
+ />
+ <Route
+ path="/forgot-password"
+ element={
+ <GuestRoute>
+ <ForgotPassword />
+ </GuestRoute>
+ }
+ />
+ <Route
+ path="/reset-password/:token"
+ element={
+ <GuestRoute>
+ <ResetPassword />
+ </GuestRoute>
+ }
+ />
 
-      {/* Admin Route */}
-      <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
-        <Route index element={<AdminOverview />} />
-        <Route path="profile" element={<AdminProfile />} />
-        <Route path="users" element={<AdminUsers />} />
-        <Route path="ktm" element={<AdminKTMVerification />} />
-        <Route path="finance" element={<AdminFinance />} />
-        <Route path="items" element={<AdminItemsModeration />} />
-        <Route path="transactions" element={<AdminTransactions />} />
-        <Route path="categories" element={<AdminCategories />} />
-        <Route path="reports" element={<AdminReports />} />
-      </Route>
+ {/* Admin Route */}
+ <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
+ <Route index element={<AdminOverview />} />
+ <Route path="profile" element={<AdminProfile />} />
+ <Route path="users" element={<AdminUsers />} />
+ <Route path="ktm" element={<AdminKTMVerification />} />
+ <Route path="finance" element={<AdminFinance />} />
+ <Route path="items" element={<AdminItemsModeration />} />
+ <Route path="promos" element={<AdminPromos />} />
+ <Route path="transactions" element={<AdminTransactions />} />
+ <Route path="categories" element={<AdminCategories />} />
+ <Route path="reports" element={<AdminReports />} />
+ </Route>
 
-      {/* Fallback route */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
-  );
+ {/* Fallback route */}
+ <Route path="*" element={<Navigate to="/" replace />} />
+ </Routes>
+ );
 };
 
 // ─── Root App ────────────────────────────────
 const App = () => {
-  useEffect(() => {
-    const theme = localStorage.getItem('theme') || 'light';
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, []);
+ useEffect(() => {
+ const theme = localStorage.getItem('theme') || 'light';
+ if (theme === 'dark') {
+ document.documentElement.classList.add('dark');
+ } else {
+ document.documentElement.classList.remove('dark');
+ }
+ }, []);
 
-  return (
-    <BrowserRouter>
-      <AuthProvider>
-        <Toaster 
-          position="top-center" 
-          toastOptions={{
-            duration: 3500,
-            style: {
-              borderRadius: '12px',
-              fontSize: '14px',
-              fontWeight: 500,
-            },
-            success: {
-              style: {
-                background: '#f0fdf4',
-                color: '#166534',
-                border: '1px solid #bbf7d0',
-              },
-            },
-            error: {
-              style: {
-                background: '#fef2f2',
-                color: '#991b1b',
-                border: '1px solid #fecaca',
-              },
-            },
-          }}
-        />
-        <AppRoutes />
-      </AuthProvider>
-    </BrowserRouter>
-  );
+ return (
+ <BrowserRouter>
+ <AuthProvider>
+ <Toaster 
+ position="top-center" 
+ toastOptions={{
+ duration: 3500,
+ style: {
+ borderRadius: '12px',
+ fontSize: '14px',
+ fontWeight: 500,
+ },
+ success: {
+ style: {
+ background: '#f0fdf4',
+ color: '#166534',
+ border: '1px solid #bbf7d0',
+ },
+ },
+ error: {
+ style: {
+ background: '#fef2f2',
+ color: '#991b1b',
+ border: '1px solid #fecaca',
+ },
+ },
+ }}
+ />
+ <AppRoutes />
+ </AuthProvider>
+ </BrowserRouter>
+ );
 };
 
 export default App;

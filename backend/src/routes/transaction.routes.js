@@ -1,7 +1,6 @@
-// src/routes/transaction.routes.js
 const express = require('express');
 const router = express.Router();
-const { protect } = require('../middleware/auth');
+const { protect, requireVerified } = require('../middleware/auth');
 const {
   createRequest,
   createInquiry,
@@ -18,7 +17,7 @@ const {
 router.use(protect);
 
 router.get('/stats', getDashboardStats);
-router.post('/', createRequest);
+router.post('/', requireVerified, createRequest);
 router.post('/inquiry', createInquiry);
 router.get('/borrowings', getMyBorrowings);
 router.get('/requests', getMyItemRequests);

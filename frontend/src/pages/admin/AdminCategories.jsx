@@ -1,15 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import categoryService from '../../services/category.service';
 import adminService from '../../services/admin.service';
 import toast from 'react-hot-toast';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHeader,
-  TableRow,
-} from '../../tailadmin/components/ui/table';
-import Badge from '../../tailadmin/components/ui/badge/Badge';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 const UPLOADS_URL = API_URL.replace('/api', '');
@@ -27,6 +20,7 @@ const AdminCategories = () => {
   const [showModal, setShowModal] = useState(false);
   const [showItemsModal, setShowItemsModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
+  
   const [newCatName, setNewCatName] = useState('');
   const [newCatDesc, setNewCatDesc] = useState('');
   const [newCatIcon, setNewCatIcon] = useState('category');
@@ -99,389 +93,344 @@ const AdminCategories = () => {
 
   const totalItems = items.length;
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-[calc(100vh-200px)]">
-        <div className="animate-spin h-10 w-10 border-b-2 border-brand-500 rounded-full"></div>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="flex flex-col gap-stack-lg max-w-container-max mx-auto w-full pb-stack-xl">
+      <style>{`
+        .glass-panel {
+          background: rgba(248, 249, 255, 0.8);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+      `}</style>
+      
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-stack-md">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800 dark:text-white/90">Category Management</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage and organize all item categories</p>
+          <h2 className="font-headline-lg text-headline-lg text-on-surface tracking-tight mb-stack-xs">Manajemen Kategori</h2>
+          <p className="text-body-md text-on-surface-variant">Kelola pengelompokan barang untuk mempermudah pencarian.</p>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="inline-flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white text-sm font-medium px-5 py-2.5 rounded-lg transition-colors shadow-theme-xs"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Add Category
-        </button>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
-          <div className="flex items-center justify-center w-12 h-12 bg-brand-50 dark:bg-brand-500/10 rounded-xl mb-5">
-            <span className="material-symbols-outlined text-brand-500">category</span>
-          </div>
-          <div>
-            <span className="text-sm text-gray-500 dark:text-gray-400">Total Categories</span>
-            <h4 className="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">{categories.length}</h4>
-          </div>
-        </div>
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
-          <div className="flex items-center justify-center w-12 h-12 bg-success-50 dark:bg-success-500/10 rounded-xl mb-5">
-            <span className="material-symbols-outlined text-success-500">inventory_2</span>
-          </div>
-          <div>
-            <span className="text-sm text-gray-500 dark:text-gray-400">Total Items</span>
-            <h4 className="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">{totalItems}</h4>
-          </div>
-        </div>
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
-          <div className="flex items-center justify-center w-12 h-12 bg-warning-50 dark:bg-warning-500/10 rounded-xl mb-5">
-            <span className="material-symbols-outlined text-warning-500">bar_chart</span>
-          </div>
-          <div>
-            <span className="text-sm text-gray-500 dark:text-gray-400">Avg Items / Category</span>
-            <h4 className="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">
-              {categories.length > 0 ? (totalItems / categories.length).toFixed(1) : '0'}
-            </h4>
-          </div>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => setShowModal(true)}
+            className="flex items-center gap-2 px-5 py-2.5 bg-primary text-on-primary rounded-xl font-bold hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/20"
+          >
+            <span className="material-symbols-outlined">add_circle</span>
+            <span className="text-label-md">Kategori Baru</span>
+          </button>
         </div>
       </div>
 
-      {/* Table Card */}
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
-        {/* Table Toolbar */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-5 py-4 border-b border-gray-100 dark:border-gray-800 sm:px-6">
-          <div>
-            <h3 className="text-base font-semibold text-gray-800 dark:text-white/90">All Categories</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{filteredCategories.length} categories found</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </span>
-              <input
-                type="text"
-                placeholder="Search categories..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 pr-4 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all w-56"
-              />
+      {/* Bento Grid Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-stack-md">
+        <div className="glass-panel p-stack-md rounded-2xl border border-outline-variant/30 shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <div className="w-10 h-10 rounded-xl bg-primary-container/20 flex items-center justify-center text-primary">
+              <span className="material-symbols-outlined">category</span>
             </div>
           </div>
+          <p className="font-display-lg text-[32px] font-extrabold text-on-surface leading-tight">{categories.length}</p>
+          <p className="text-label-sm text-on-surface-variant mt-1">Total Kategori</p>
         </div>
+        <div className="glass-panel p-stack-md rounded-2xl border border-outline-variant/30 shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <div className="w-10 h-10 rounded-xl bg-tertiary-container/20 flex items-center justify-center text-tertiary">
+              <span className="material-symbols-outlined">inventory_2</span>
+            </div>
+          </div>
+          <p className="font-display-lg text-[32px] font-extrabold text-on-surface leading-tight">{totalItems}</p>
+          <p className="text-label-sm text-on-surface-variant mt-1">Total Barang</p>
+        </div>
+        <div className="glass-panel p-stack-md rounded-2xl border border-outline-variant/30 shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <div className="w-10 h-10 rounded-xl bg-secondary-container/20 flex items-center justify-center text-secondary">
+              <span className="material-symbols-outlined">analytics</span>
+            </div>
+          </div>
+          <p className="font-display-lg text-[32px] font-extrabold text-on-surface leading-tight">
+            {categories.length > 0 ? (totalItems / categories.length).toFixed(1) : '0'}
+          </p>
+          <p className="text-label-sm text-on-surface-variant mt-1">Rata-rata Barang/Kategori</p>
+        </div>
+        <div className="glass-panel p-stack-md rounded-2xl border border-outline-variant/30 shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <div className="w-10 h-10 rounded-xl bg-error-container/20 flex items-center justify-center text-error">
+              <span className="material-symbols-outlined">report_problem</span>
+            </div>
+          </div>
+          <p className="font-display-lg text-[32px] font-extrabold text-on-surface leading-tight">
+            {categories.filter(c => getItemCount(c.name) === 0).length}
+          </p>
+          <p className="text-label-sm text-on-surface-variant mt-1">Kategori Kosong</p>
+        </div>
+      </div>
 
-        {/* Table */}
-        <div className="max-w-full overflow-x-auto">
-          <Table>
-            <TableHeader className="border-b border-gray-100 dark:border-gray-800">
-              <TableRow>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                  Category
-                </TableCell>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                  Description
-                </TableCell>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                  Items Count
-                </TableCell>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                  Status
-                </TableCell>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                  Actions
-                </TableCell>
-              </TableRow>
-            </TableHeader>
-
-            <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
-              {filteredCategories.length === 0 ? (
-                <TableRow>
-                  <TableCell className="px-5 py-12 text-center" colSpan={5}>
-                    <div className="flex flex-col items-center gap-3 text-gray-400 dark:text-gray-500">
-                      <span className="material-symbols-outlined text-5xl">category</span>
-                      <p className="font-medium">No categories found</p>
-                      <p className="text-sm">Try adjusting your search or add a new category.</p>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredCategories.map((cat) => {
+      {/* Categories List Card */}
+      <div className="glass-panel rounded-2xl border border-outline-variant/30 shadow-sm overflow-hidden mt-2">
+        <div className="px-6 py-4 border-b border-outline-variant/20 flex flex-col sm:flex-row items-start sm:items-center justify-between bg-surface-container-low/50 gap-4">
+          <h3 className="font-title-md text-title-md text-on-surface">Daftar Kategori</h3>
+          <div className="relative w-full sm:max-w-[240px]">
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[18px]">search</span>
+            <input 
+              type="text" 
+              placeholder="Cari kategori..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-surface-bright border border-outline-variant/50 rounded-lg py-2 pl-9 pr-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+            />
+          </div>
+        </div>
+        
+        {isLoading ? (
+          <div className="flex justify-center items-center h-48">
+            <div className="animate-spin h-10 w-10 border-b-2 border-primary rounded-full"></div>
+          </div>
+        ) : (
+          <div className="overflow-x-auto custom-scrollbar">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="text-label-sm text-on-surface-variant uppercase tracking-wider border-b border-outline-variant/10">
+                  <th className="px-6 py-4 font-bold">Kategori & Ikon</th>
+                  <th className="px-6 py-4 font-bold">Deskripsi</th>
+                  <th className="px-6 py-4 font-bold">Jumlah Barang</th>
+                  <th className="px-6 py-4 font-bold">Status</th>
+                  <th className="px-6 py-4 font-bold text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-outline-variant/10">
+                {filteredCategories.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" className="text-center py-10 text-on-surface-variant">
+                      <span className="material-symbols-outlined text-[48px] opacity-30 mb-2">category</span>
+                      <p>Kategori tidak ditemukan</p>
+                    </td>
+                  </tr>
+                ) : filteredCategories.map(cat => {
                   const count = getItemCount(cat.name);
                   return (
-                    <TableRow key={cat.id} className="hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors">
-                      {/* Category Name & Icon */}
-                      <TableCell className="px-5 py-4 sm:px-6 text-start">
-                        <div className="flex items-center gap-3">
-                          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-brand-50 dark:bg-brand-500/10 shrink-0">
-                            <span className="material-symbols-outlined text-brand-500 text-[20px]">
-                              {cat.icon || 'category'}
-                            </span>
+                    <tr key={cat.id} className="hover:bg-primary-container/5 transition-colors group">
+                      <td className="px-6 py-5">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-xl bg-primary-container/10 flex items-center justify-center text-primary border border-primary-container/20">
+                            <span className="material-symbols-outlined" style={{fontVariationSettings: "'FILL' 1"}}>{cat.icon || 'category'}</span>
                           </div>
                           <div>
-                            <span className="block font-medium text-gray-800 text-theme-sm dark:text-white/90">
-                              {cat.name}
-                            </span>
-                            <span className="block text-gray-400 text-theme-xs dark:text-gray-500">
-                              ID: #{cat.id}
-                            </span>
+                            <p className="font-bold text-on-surface group-hover:text-primary transition-colors">{cat.name}</p>
+                            <p className="text-[12px] text-on-surface-variant">ID: #{cat.id}</p>
                           </div>
                         </div>
-                      </TableCell>
-
-                      {/* Description */}
-                      <TableCell className="px-5 py-4 text-gray-500 text-theme-sm dark:text-gray-400 max-w-[200px]">
-                        <span className="truncate block">
-                          {cat.description || <span className="italic text-gray-300 dark:text-gray-600">No description</span>}
-                        </span>
-                      </TableCell>
-
-                      {/* Items Count */}
-                      <TableCell className="px-5 py-4 text-start">
-                        <button
+                      </td>
+                      <td className="px-6 py-5 max-w-[200px]">
+                        <span className="text-sm text-on-surface-variant truncate block">{cat.description || '-'}</span>
+                      </td>
+                      <td className="px-6 py-5">
+                        <button 
                           onClick={() => handleViewItems(cat)}
-                          className="inline-flex items-center gap-1.5 text-brand-600 dark:text-brand-400 hover:underline text-theme-sm font-medium"
+                          className="flex items-center gap-1.5 font-medium text-primary hover:underline"
                         >
-                          <span className="material-symbols-outlined text-[16px]">inventory_2</span>
-                          {count} Items
+                          <span className="material-symbols-outlined text-[18px]">inventory_2</span>
+                          {count} Barang
                         </button>
-                      </TableCell>
-
-                      {/* Status Badge */}
-                      <TableCell className="px-5 py-4 text-start">
-                        <Badge size="sm" color={count > 0 ? 'success' : 'warning'}>
-                          {count > 0 ? 'Active' : 'Empty'}
-                        </Badge>
-                      </TableCell>
-
-                      {/* Actions */}
-                      <TableCell className="px-5 py-4 text-start">
-                        <div className="flex items-center gap-2">
-                          <button
+                      </td>
+                      <td className="px-6 py-5">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                          count > 0 ? 'bg-secondary-container text-on-secondary-container' : 'bg-error-container text-on-error-container'
+                        }`}>
+                          {count > 0 ? 'Aktif' : 'Kosong'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-5 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <button 
                             onClick={() => handleViewItems(cat)}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                            className="p-2 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-lg transition-all" 
+                            title="Lihat Barang"
                           >
-                            <span className="material-symbols-outlined text-[14px]">visibility</span>
-                            View
+                            <span className="material-symbols-outlined">visibility</span>
                           </button>
-                          <button
+                          <button 
                             onClick={() => handleDeleteCategory(cat.id, cat.name)}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-error-600 dark:text-error-400 bg-error-50 dark:bg-error-500/10 hover:bg-error-100 dark:hover:bg-error-500/20 rounded-lg transition-colors"
+                            className="p-2 text-on-surface-variant hover:text-error hover:bg-error/10 rounded-lg transition-all" 
+                            title="Hapus"
                           >
-                            <span className="material-symbols-outlined text-[14px]">delete</span>
-                            Delete
+                            <span className="material-symbols-outlined">delete</span>
                           </button>
                         </div>
-                      </TableCell>
-                    </TableRow>
+                      </td>
+                    </tr>
                   );
-                })
-              )}
-            </TableBody>
-          </Table>
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Trust Badge Contextual Info */}
+      <div className="mt-4 p-stack-lg glass-panel rounded-2xl border border-outline-variant/30 flex flex-col md:flex-row items-center gap-stack-lg">
+        <div className="w-16 h-16 rounded-2xl bg-secondary-container/30 flex items-center justify-center text-secondary shrink-0">
+          <span className="material-symbols-outlined text-[32px]" style={{fontVariationSettings: "'FILL' 1"}}>verified</span>
+        </div>
+        <div className="flex-1 text-center md:text-left">
+          <h4 className="font-title-md text-on-surface">Penyusunan Kategori</h4>
+          <p className="text-body-md text-on-surface-variant mt-1">Gunakan ikon dan penamaan kategori yang intuitif agar mahasiswa mudah mencari barang yang dibutuhkan.</p>
         </div>
       </div>
 
       {/* ADD CATEGORY MODAL */}
-      {showModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" onClick={() => setShowModal(false)} />
-          <div className="relative w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100 dark:border-gray-800">
-              <div>
-                <h3 className="text-lg font-bold text-gray-800 dark:text-white/90">Add New Category</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Fill in the details below</p>
-              </div>
-              <button
+      {showModal && createPortal(
+        <div className="fixed inset-0 z-[99] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-surface-container-lowest glass-panel rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-fade-in border border-outline-variant/20">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-outline-variant/10 bg-surface-bright">
+              <h3 className="font-headline-lg text-[20px] text-on-surface">Tambah Kategori Baru</h3>
+              <button 
                 onClick={() => setShowModal(false)}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                className="text-on-surface-variant hover:text-on-surface p-2 rounded-full hover:bg-surface-container-high transition-colors"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <span className="material-symbols-outlined">close</span>
               </button>
             </div>
-
-            {/* Modal Body */}
-            <form onSubmit={handleCreateCategory} className="p-6 space-y-5">
-              {/* Category Name */}
+            
+            <form onSubmit={handleCreateCategory} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                  Category Name <span className="text-error-500">*</span>
-                </label>
-                <input
-                  type="text"
+                <label className="block text-sm font-bold text-on-surface mb-1">Nama Kategori <span className="text-error">*</span></label>
+                <input 
+                  type="text" 
                   value={newCatName}
                   onChange={(e) => setNewCatName(e.target.value)}
-                  placeholder="e.g. Electronics, Sports..."
+                  placeholder="Misal: Elektronik, Olahraga..."
                   required
-                  className="w-full px-4 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all"
+                  className="w-full bg-surface-bright border border-outline-variant/50 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary focus:border-primary transition-all outline-none text-on-surface"
                 />
               </div>
-
-              {/* Description */}
+              
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                  Description
-                </label>
-                <textarea
+                <label className="block text-sm font-bold text-on-surface mb-1">Deskripsi</label>
+                <textarea 
                   value={newCatDesc}
                   onChange={(e) => setNewCatDesc(e.target.value)}
-                  placeholder="Short description for this category..."
-                  rows={3}
-                  className="w-full px-4 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all resize-none"
-                />
+                  placeholder="Deskripsi singkat..."
+                  rows="3"
+                  className="w-full bg-surface-bright border border-outline-variant/50 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary focus:border-primary transition-all outline-none resize-none text-on-surface"
+                ></textarea>
               </div>
 
-              {/* Icon Picker */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                  Icon
-                </label>
+                <label className="block text-sm font-bold text-on-surface mb-2">Pilih Ikon</label>
                 <div className="grid grid-cols-5 gap-2">
                   {ICON_OPTIONS.map(icon => (
                     <button
                       key={icon}
                       type="button"
                       onClick={() => setNewCatIcon(icon)}
-                      className={`p-3 rounded-xl flex items-center justify-center transition-all border text-sm ${
-                        newCatIcon === icon
-                          ? 'bg-brand-500 text-white border-brand-500 shadow-md'
-                          : 'bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-brand-400 hover:text-brand-500'
+                      className={`p-3 rounded-xl flex items-center justify-center transition-all border ${
+                        newCatIcon === icon 
+                        ? 'bg-primary text-white border-primary shadow-md' 
+                        : 'bg-surface-container text-on-surface-variant border-transparent hover:border-primary/40 hover:text-primary'
                       }`}
-                      title={icon}
                     >
                       <span className="material-symbols-outlined text-[20px]">{icon}</span>
                     </button>
                   ))}
                 </div>
-                <p className="text-xs text-gray-400 mt-1.5">Selected: <span className="font-medium text-gray-600 dark:text-gray-300">{newCatIcon}</span></p>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex items-center gap-3 pt-2">
+              <div className="flex items-center gap-3 pt-4 border-t border-outline-variant/10">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  className="flex-1 px-4 py-2.5 text-sm font-bold text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-colors"
                 >
-                  Cancel
+                  Batal
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting || !newCatName.trim()}
-                  className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-brand-500 hover:bg-brand-600 disabled:opacity-60 disabled:cursor-not-allowed rounded-lg transition-colors shadow-theme-xs"
+                  className="flex-1 px-4 py-2.5 text-sm font-bold text-white bg-primary hover:bg-primary/90 disabled:opacity-50 rounded-xl transition-colors shadow-sm"
                 >
-                  {isSubmitting ? 'Creating...' : 'Create Category'}
+                  {isSubmitting ? 'Menyimpan...' : 'Simpan'}
                 </button>
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* VIEW ITEMS MODAL */}
-      {showItemsModal && selectedCategory && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" onClick={() => setShowItemsModal(false)} />
-          <div className="relative w-full max-w-2xl bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 max-h-[85vh] flex flex-col">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100 dark:border-gray-800 shrink-0">
+      {showItemsModal && selectedCategory && createPortal(
+        <div className="fixed inset-0 z-[99] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-surface-container-lowest glass-panel rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl animate-fade-in flex flex-col max-h-[85vh] border border-outline-variant/20">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-outline-variant/10 bg-surface-bright shrink-0">
               <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-brand-50 dark:bg-brand-500/10">
-                  <span className="material-symbols-outlined text-brand-500">{selectedCategory.icon || 'category'}</span>
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                  <span className="material-symbols-outlined">{selectedCategory.icon || 'category'}</span>
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-gray-800 dark:text-white/90">{selectedCategory.name}</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{getItemCount(selectedCategory.name)} items in this category</p>
+                  <h3 className="font-headline-lg text-[18px] text-on-surface">{selectedCategory.name}</h3>
+                  <p className="text-sm text-on-surface-variant">{getItemCount(selectedCategory.name)} barang dalam kategori ini</p>
                 </div>
               </div>
-              <button
+              <button 
                 onClick={() => setShowItemsModal(false)}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                className="text-on-surface-variant hover:text-on-surface p-2 rounded-full hover:bg-surface-container-high transition-colors"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <span className="material-symbols-outlined">close</span>
               </button>
             </div>
-
-            {/* Items List */}
-            <div className="overflow-y-auto flex-1">
+            
+            <div className="overflow-y-auto flex-1 p-0">
               {getCategoryItems(selectedCategory.name).length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-gray-500">
-                  <span className="material-symbols-outlined text-5xl mb-3">inventory_2</span>
-                  <p className="font-medium">No items in this category</p>
+                <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant">
+                  <span className="material-symbols-outlined text-5xl mb-3 opacity-50">inventory_2</span>
+                  <p className="font-medium">Tidak ada barang dalam kategori ini</p>
                 </div>
               ) : (
-                <div className="max-w-full overflow-x-auto">
-                  <Table>
-                    <TableHeader className="border-b border-gray-100 dark:border-gray-800">
-                      <TableRow>
-                        <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400 text-start">Item</TableCell>
-                        <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400 text-start">Owner</TableCell>
-                        <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400 text-start">Price/Day</TableCell>
-                        <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400 text-start">Status</TableCell>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
-                      {getCategoryItems(selectedCategory.name).map(item => (
-                        <TableRow key={item.id} className="hover:bg-gray-50 dark:hover:bg-white/[0.02]">
-                          <TableCell className="px-5 py-3 text-start">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 shrink-0">
-                                {item.fotoBarang ? (
-                                  <img
-                                    src={`${UPLOADS_URL}${item.fotoBarang.split(',')[0]}`}
-                                    alt={item.namaBarang}
-                                    className="w-full h-full object-cover"
-                                  />
-                                ) : (
-                                  <div className="w-full h-full flex items-center justify-center">
-                                    <span className="material-symbols-outlined text-gray-400 text-[18px]">image</span>
-                                  </div>
-                                )}
-                              </div>
-                              <span className="font-medium text-gray-800 dark:text-white/90 text-theme-sm truncate max-w-[120px]">
-                                {item.namaBarang}
-                              </span>
+                <table className="w-full text-left">
+                  <thead className="bg-surface-container-low sticky top-0">
+                    <tr className="text-[12px] text-on-surface-variant uppercase tracking-wider border-b border-outline-variant/10">
+                      <th className="px-6 py-3 font-bold">Barang</th>
+                      <th className="px-6 py-3 font-bold">Pemilik</th>
+                      <th className="px-6 py-3 font-bold">Harga/Hari</th>
+                      <th className="px-6 py-3 font-bold">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-outline-variant/10">
+                    {getCategoryItems(selectedCategory.name).map(item => (
+                      <tr key={item.id} className="hover:bg-surface-container-low transition-colors">
+                        <td className="px-6 py-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg overflow-hidden bg-surface-container shrink-0 border border-outline-variant/20">
+                              {item.fotoBarang ? (
+                                <img src={`${UPLOADS_URL}${item.fotoBarang.split(',')[0]}`} alt={item.namaBarang} className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-outline">
+                                  <span className="material-symbols-outlined text-[18px]">image</span>
+                                </div>
+                              )}
                             </div>
-                          </TableCell>
-                          <TableCell className="px-5 py-3 text-gray-500 text-theme-sm dark:text-gray-400 text-start">
-                            {item.owner?.nama || '-'}
-                          </TableCell>
-                          <TableCell className="px-5 py-3 text-theme-sm text-start font-medium text-brand-600 dark:text-brand-400">
-                            Rp {item.hargaSewa?.toLocaleString('id-ID')}
-                          </TableCell>
-                          <TableCell className="px-5 py-3 text-start">
-                            <Badge size="sm" color={item.isBanned ? 'error' : item.statusBarang === 'Tersedia' ? 'success' : 'warning'}>
-                              {item.isBanned ? 'Banned' : item.statusBarang}
-                            </Badge>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                            <span className="font-medium text-on-surface text-sm">{item.namaBarang}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-3 text-sm text-on-surface-variant">{item.owner?.nama || '-'}</td>
+                        <td className="px-6 py-3 text-sm font-bold text-primary">Rp {item.hargaSewa?.toLocaleString('id-ID')}</td>
+                        <td className="px-6 py-3">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            item.isBanned ? 'bg-error-container text-on-error-container' : 
+                            item.stok > 0 ? 'bg-secondary-container text-on-secondary-container' : 'bg-tertiary-container text-on-tertiary-container'
+                          }`}>
+                            {item.isBanned ? 'Banned' : item.stok > 0 ? 'Tersedia' : 'Habis'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

@@ -1,540 +1,407 @@
-// src/pages/Register.jsx
-// Halaman registrasi mahasiswa baru
-
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import {
-  Eye, EyeOff, Mail, Lock, User, BookOpen,
-  Hash, Layers, Phone, ArrowRight, Loader2,
-  CheckCircle2, GraduationCap, ShieldCheck,
-} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import authService from '../services/auth.service';
+import CustomSelect from '../components/common/CustomSelect';
 
-// ── Daftar Jurusan / Program Studi ──────────────────
 const JURUSAN_LIST = [
-  // Teknik
-  'Teknik Informatika',
-  'Sistem Informasi',
-  'Teknik Elektro',
-  'Teknik Mesin',
-  'Teknik Sipil',
-  'Teknik Kimia',
-  'Teknik Industri',
-  'Teknik Lingkungan',
-  // Komputer
-  'Ilmu Komputer',
-  'Teknologi Informasi',
-  // Sains
-  'Matematika',
-  'Fisika',
-  'Kimia',
-  'Biologi',
-  // Ekonomi & Bisnis
-  'Manajemen',
-  'Akuntansi',
-  'Ekonomi Pembangunan',
-  'Bisnis Digital',
-  // Sosial
-  'Ilmu Komunikasi',
-  'Hubungan Internasional',
-  'Ilmu Hukum',
-  'Administrasi Bisnis',
-  // Kesehatan
-  'Kedokteran',
-  'Keperawatan',
-  'Farmasi',
-  'Kesehatan Masyarakat',
-  // Desain & Seni
-  'Desain Komunikasi Visual',
-  'Arsitektur',
-  'Desain Interior',
-  // Pendidikan
-  'Pendidikan Matematika',
-  'Pendidikan Bahasa Indonesia',
-  'Pendidikan Bahasa Inggris',
-  'PGSD',
-  // Lain
-  'Lainnya',
+ 'Teknik Informatika',
+ 'Sistem Informasi',
+ 'Teknik Elektro',
+ 'Teknik Mesin',
+ 'Teknik Sipil',
+ 'Teknik Kimia',
+ 'Teknik Industri',
+ 'Teknik Lingkungan',
+ 'Ilmu Komputer',
+ 'Teknologi Informasi',
+ 'Matematika',
+ 'Fisika',
+ 'Kimia',
+ 'Biologi',
+ 'Manajemen',
+ 'Akuntansi',
+ 'Ekonomi Pembangunan',
+ 'Bisnis Digital',
+ 'Ilmu Komunikasi',
+ 'Hubungan Internasional',
+ 'Ilmu Hukum',
+ 'Administrasi Bisnis',
+ 'Kedokteran',
+ 'Keperawatan',
+ 'Farmasi',
+ 'Kesehatan Masyarakat',
+ 'Desain Komunikasi Visual',
+ 'Arsitektur',
+ 'Desain Interior',
+ 'Pendidikan Matematika',
+ 'Pendidikan Bahasa Indonesia',
+ 'Pendidikan Bahasa Inggris',
+ 'PGSD',
+ 'Lainnya',
 ];
 
-// ── Password Strength ────────────────────────────────
 const getPasswordStrength = (pass) => {
-  if (!pass) return { level: 0, label: '', color: '#e5e7eb' };
-  let score = 0;
-  if (pass.length >= 8)           score++;
-  if (/[A-Z]/.test(pass))         score++;
-  if (/[0-9]/.test(pass))         score++;
-  if (/[^A-Za-z0-9]/.test(pass))  score++;
-  const map = [
-    { level: 1, label: 'Lemah',        color: '#ef4444' },
-    { level: 2, label: 'Cukup',        color: '#f59e0b' },
-    { level: 3, label: 'Kuat',         color: '#3b82f6' },
-    { level: 4, label: 'Sangat Kuat',  color: '#10b981' },
-  ];
-  return map[score - 1] || { level: 0, label: '', color: '#e5e7eb' };
+ if (!pass) return { level: 0, color: 'var(--color-outline-variant)' };
+ let score = 0;
+ if (pass.length >= 8) score++;
+ if (/[A-Z]/.test(pass)) score++;
+ if (/[0-9]/.test(pass)) score++;
+ if (/[^A-Za-z0-9]/.test(pass)) score++;
+ 
+ if (score === 1) return { level: 1, color: 'var(--color-error)' };
+ if (score === 2) return { level: 2, color: 'var(--color-tertiary)' };
+ if (score >= 3) return { level: 3, color: 'var(--color-primary)' };
+ return { level: 0, color: 'var(--color-outline-variant)' };
 };
 
-// ── Komponen Input ───────────────────────────────────
-const InputField = ({ id, label, icon: Icon, error, children, hint }) => (
-  <div>
-    <label htmlFor={id} className="form-label">{label}</label>
-    <div className="relative">
-      {Icon && (
-        <Icon size={15} style={{
-          position: 'absolute', left: 13, top: '50%',
-          transform: 'translateY(-50%)',
-          color: error ? '#ef4444' : '#9ca3af',
-          pointerEvents: 'none', zIndex: 1,
-        }} />
-      )}
-      {children}
-    </div>
-    {error && <p className="text-xs text-red-500 mt-1.5 font-medium">{error}</p>}
-    {!error && hint && <p className="text-xs text-gray-400 mt-1">{hint}</p>}
-  </div>
-);
-
-// ── Main Component ────────────────────────────────────
 const Register = () => {
-  const [form, setForm] = useState({
-    nama:            '',
-    email:           '',
-    nim:             '',
-    jurusan:         '',
-    universitas:     '',
-    whatsapp:        '',
-    password:        '',
-    confirmPassword: '',
-  });
+ const [form, setForm] = useState({
+ nama: '',
+ email: '',
+ nim: '',
+ jurusan: '',
+ universitas: '',
+ whatsapp: '',
+ password: '',
+ confirmPassword: '',
+ });
 
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirm,  setShowConfirm]  = useState(false);
-  const [isLoading,    setIsLoading]    = useState(false);
-  const [errors,       setErrors]       = useState({});
-  const [agreed,       setAgreed]       = useState(false);
+ const [showPassword, setShowPassword] = useState(false);
+ const [showConfirm, setShowConfirm] = useState(false);
+ const [isLoading, setIsLoading] = useState(false);
+ const [errors, setErrors] = useState({});
+ const [agreed, setAgreed] = useState(false);
 
-  const { login }  = useAuth();
-  const navigate   = useNavigate();
-  const pwStrength = getPasswordStrength(form.password);
+ const { login } = useAuth();
+ const navigate = useNavigate();
+ const pwStrength = getPasswordStrength(form.password);
 
-  // ─── Validasi client-side ───────────────────────────
-  const validate = () => {
-    const e = {};
-    if (!form.nama.trim() || form.nama.trim().length < 3)
-      e.nama = 'Nama lengkap minimal 3 karakter';
+ const validate = () => {
+ const e = {};
+ if (!form.nama.trim() || form.nama.trim().length < 3) e.nama = 'Minimal 3 karakter';
+ if (!form.email) e.email = 'Wajib diisi';
+ else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = 'Email tidak valid';
+ else if (!form.email.toLowerCase().trim().endsWith('.ac.id')) e.email = 'Gunakan email .ac.id';
+ 
+ if (!form.password) e.password = 'Wajib diisi';
+ else if (form.password.length < 8) e.password = 'Minimal 8 karakter';
+ 
+ if (!form.confirmPassword) e.confirmPassword = 'Wajib diisi';
+ else if (form.password !== form.confirmPassword) e.confirmPassword = 'Tidak cocok';
+ 
+ if (form.nim && !/^\d{5,20}$/.test(form.nim.trim())) e.nim = 'Angka (5-20 digit)';
+ if (form.whatsapp && !/^(\+62|08)\d{7,13}$/.test(form.whatsapp.trim())) e.whatsapp = 'Format salah';
+ 
+ if (!agreed) e.terms = 'Anda harus menyetujui S&K';
 
-    if (!form.email)
-      e.email = 'Email wajib diisi';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
-      e.email = 'Format email tidak valid';
-    else if (!form.email.toLowerCase().trim().endsWith('.ac.id'))
-      e.email = 'Gunakan email kampus yang berakhiran .ac.id';
+ setErrors(e);
+ return Object.keys(e).length === 0;
+ };
 
-    if (!form.password)
-      e.password = 'Password wajib diisi';
-    else if (form.password.length < 8)
-      e.password = 'Password minimal 8 karakter';
+ const handleChange = (e) => {
+ const { name, value } = e.target;
+ setForm((prev) => ({ ...prev, [name]: value }));
+ if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
+ };
 
-    if (!form.confirmPassword)
-      e.confirmPassword = 'Konfirmasi password wajib diisi';
-    else if (form.password !== form.confirmPassword)
-      e.confirmPassword = 'Password tidak cocok';
+ const handleSubmit = async (e) => {
+ e.preventDefault();
+ if (!validate()) return;
 
-    if (form.nim && !/^\d{5,20}$/.test(form.nim.trim()))
-      e.nim = 'NIM harus berupa angka (5-20 digit)';
+ setIsLoading(true);
+ try {
+ const { confirmPassword, ...payload } = form;
+ const res = await authService.register(payload);
+ login(res.data.user, res.data.token);
+ toast.success(res.message || 'Registrasi berhasil! 🎉');
+ navigate('/');
+ } catch (err) {
+ const serverErrors = err.response?.data?.errors;
+ if (serverErrors && typeof serverErrors === 'object') {
+ setErrors(serverErrors);
+ toast.error('Periksa kembali data Anda.');
+ } else {
+ toast.error(err.response?.data?.message || 'Terjadi kesalahan.');
+ }
+ } finally {
+ setIsLoading(false);
+ }
+ };
 
-    if (form.whatsapp && !/^(\+62|08)\d{7,13}$/.test(form.whatsapp.trim()))
-      e.whatsapp = 'Format WhatsApp tidak valid (08xx / +62xx)';
+ return (
+ <div className="bg-background text-on-background min-h-screen font-body-md antialiased overflow-x-hidden flex items-center justify-center p-4">
+ <main className="w-full max-w-container-max flex flex-col lg:flex-row min-h-[800px] rounded-[2rem] overflow-hidden shadow-2xl relative bg-surface">
+ 
+ {/* Background Pattern */}
+ <div className="absolute inset-0 opacity-5 pointer-events-none z-0" style={{ backgroundImage: 'radial-gradient(var(--color-primary) 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
+ 
+ {/* Left Column: Branding */}
+ <div className="hidden lg:flex w-full lg:w-5/12 bg-gradient-to-br from-primary-fixed-variant to-primary flex-col justify-between p-12 text-on-primary relative z-10">
+ <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+ <div className="absolute -top-20 -left-20 w-64 h-64 bg-primary-container rounded-full blur-3xl opacity-30 mix-blend-screen"></div>
+ <div className="absolute bottom-10 right-10 w-96 h-96 bg-surface-tint rounded-full blur-[100px] opacity-40 mix-blend-screen"></div>
+ </div>
+ <div>
+ <Link to="/" className="inline-flex items-center gap-2 mb-16">
+ <span className="material-symbols-outlined text-4xl text-on-primary">sync_alt</span>
+ <span className="font-headline-lg text-headline-lg font-black tracking-tight">CampusRent</span>
+ </Link>
+ <h1 className="font-display-lg text-display-lg text-on-primary mb-6">Mulai Perjalanan Anda</h1>
+ <p className="font-body-lg text-body-lg text-primary-fixed-dim mb-12 opacity-90 max-w-md">Daftarkan diri Anda dan bergabung dalam komunitas peminjaman barang mahasiswa yang inovatif.</p>
+ <ul className="space-y-6">
+ <li className="flex items-start gap-4">
+ <div className="w-10 h-10 rounded-full bg-on-primary/10 flex items-center justify-center shrink-0 backdrop-blur-sm border border-white/10">
+ <span className="material-symbols-outlined text-on-primary">school</span>
+ </div>
+ <div>
+ <h3 className="font-title-md text-title-md text-on-primary mb-1">Khusus Mahasiswa</h3>
+ <p className="font-body-md text-body-md text-primary-fixed-dim">Validasi email .ac.id untuk keamanan ekstra.</p>
+ </div>
+ </li>
+ <li className="flex items-start gap-4">
+ <div className="w-10 h-10 rounded-full bg-on-primary/10 flex items-center justify-center shrink-0 backdrop-blur-sm border border-white/10">
+ <span className="material-symbols-outlined text-on-primary">volunteer_activism</span>
+ </div>
+ <div>
+ <h3 className="font-title-md text-title-md text-on-primary mb-1">Saling Membantu</h3>
+ <p className="font-body-md text-body-md text-primary-fixed-dim">Temukan barang yang Anda butuhkan dengan mudah.</p>
+ </div>
+ </li>
+ </ul>
+ </div>
+ <div className="mt-12 text-sm text-primary-fixed-dim font-label-sm text-label-sm">
+ © 2026 CampusRent. Made with ❤️ for students.
+ </div>
+ </div>
 
-    if (!agreed)
-      e.terms = 'Kamu harus menyetujui syarat & ketentuan';
+ {/* Right Column: Forms */}
+ <div className="w-full lg:w-7/12 p-6 md:p-12 lg:p-16 flex items-center justify-center relative z-10">
+ <div className="lg:hidden absolute top-8 left-8">
+ <Link to="/" className="inline-flex items-center gap-2">
+ <span className="material-symbols-outlined text-primary">sync_alt</span>
+ <span className="font-title-md text-title-md font-bold text-primary">CampusRent</span>
+ </Link>
+ </div>
 
-    setErrors(e);
-    return Object.keys(e).length === 0;
-  };
+ <div className="w-full max-w-lg animate-fade-in transition-all duration-500">
+ <div className="mb-8 text-center lg:text-left mt-12 lg:mt-0">
+ <h2 className="font-headline-lg text-headline-lg text-on-surface mb-2">Daftar Sekarang</h2>
+ <p className="font-body-md text-body-md text-on-surface-variant">Bergabunglah dengan komunitas peminjaman barang mahasiswa.</p>
+ </div>
+ 
+ <form onSubmit={handleSubmit} className="space-y-5 h-[614px] lg:h-auto overflow-y-auto pr-2 no-scrollbar" noValidate>
+ 
+ <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+ <div>
+ <label className="block font-label-md text-label-md text-on-surface mb-2" htmlFor="nama">Nama Lengkap</label>
+ <input 
+ className="w-full px-4 py-3 bg-surface-container-low border border-outline-variant/30 rounded-xl font-body-md text-body-md text-on-surface focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all" 
+ id="nama" 
+ name="nama"
+ placeholder="John Doe" 
+ type="text"
+ value={form.nama}
+ onChange={handleChange}
+ style={{ borderColor: errors.nama ? 'var(--color-error)' : undefined }}
+ />
+ {errors.nama && <p className="text-xs text-error mt-1 font-medium">{errors.nama}</p>}
+ </div>
+ <div>
+ <label className="block font-label-md text-label-md text-on-surface mb-2" htmlFor="nim">NIM</label>
+ <input 
+ className="w-full px-4 py-3 bg-surface-container-low border border-outline-variant/30 rounded-xl font-body-md text-body-md text-on-surface focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all" 
+ id="nim" 
+ name="nim"
+ placeholder="123456789" 
+ type="text"
+ value={form.nim}
+ onChange={handleChange}
+ style={{ borderColor: errors.nim ? 'var(--color-error)' : undefined }}
+ />
+ {errors.nim && <p className="text-xs text-error mt-1 font-medium">{errors.nim}</p>}
+ </div>
+ </div>
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
-  };
+ <div>
+ <label className="block font-label-md text-label-md text-on-surface mb-2" htmlFor="email">Email Kampus</label>
+ <div className="relative">
+ <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+ <span className="material-symbols-outlined text-outline" style={{ color: errors.email ? 'var(--color-error)' : undefined }}>mail</span>
+ </div>
+ <input 
+ className="w-full pl-12 pr-4 py-3 bg-surface-container-low border border-outline-variant/30 rounded-xl font-body-md text-body-md text-on-surface focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all" 
+ id="email" 
+ name="email"
+ placeholder="nim@mahasiswa.univ.edu" 
+ type="email"
+ value={form.email}
+ onChange={handleChange}
+ style={{ borderColor: errors.email ? 'var(--color-error)' : undefined }}
+ />
+ </div>
+ {errors.email && <p className="text-xs text-error mt-1.5 font-medium">{errors.email}</p>}
+ </div>
 
-  // ─── Submit ─────────────────────────────────────────
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validate()) return;
+ <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+ <div>
+ <label className="block font-label-md text-label-md text-on-surface mb-2" htmlFor="universitas">Universitas</label>
+ <input 
+ className="w-full px-4 py-3 bg-surface-container-low border border-outline-variant/30 rounded-xl font-body-md text-body-md text-on-surface focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all" 
+ id="universitas" 
+ name="universitas"
+ placeholder="Nama Universitas" 
+ type="text"
+ value={form.universitas}
+ onChange={handleChange}
+ style={{ borderColor: errors.universitas ? 'var(--color-error)' : undefined }}
+ />
+ {errors.universitas && <p className="text-xs text-error mt-1 font-medium">{errors.universitas}</p>}
+ </div>
+ <div>
+ <label className="block font-label-md text-label-md text-on-surface mb-2" htmlFor="jurusan">Jurusan</label>
+ <CustomSelect 
+ className="w-full rounded-xl border border-outline-variant/30 bg-surface-container-low px-1 py-1.5 font-body-md text-body-md shadow-sm transition-all focus-within:ring-4 focus-within:ring-primary/10 focus-within:border-primary"
+ value={form.jurusan}
+ onChange={(val) => {
+ setForm((prev) => ({ ...prev, jurusan: val }));
+ if (errors.jurusan) setErrors((prev) => ({ ...prev, jurusan: '' }));
+ }}
+ options={JURUSAN_LIST.map((j) => ({ value: j, label: j }))}
+ placeholder="Pilih Jurusan"
+ />
+ {errors.jurusan && <p className="text-xs text-error mt-1 font-medium">{errors.jurusan}</p>}
+ </div>
+ </div>
 
-    setIsLoading(true);
-    try {
-      const { confirmPassword, ...payload } = form;
-      const res = await authService.register(payload);
+ <div>
+ <label className="block font-label-md text-label-md text-on-surface mb-2" htmlFor="whatsapp">Nomor WhatsApp</label>
+ <div className="relative">
+ <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+ <span className="font-label-md text-label-md text-outline" style={{ color: errors.whatsapp ? 'var(--color-error)' : undefined }}>+62</span>
+ </div>
+ <input 
+ className="w-full pl-12 pr-4 py-3 bg-surface-container-low border border-outline-variant/30 rounded-xl font-body-md text-body-md text-on-surface focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all" 
+ id="whatsapp" 
+ name="whatsapp"
+ placeholder="81234567890" 
+ type="tel"
+ value={form.whatsapp}
+ onChange={handleChange}
+ style={{ borderColor: errors.whatsapp ? 'var(--color-error)' : undefined }}
+ />
+ </div>
+ {errors.whatsapp && <p className="text-xs text-error mt-1.5 font-medium">{errors.whatsapp}</p>}
+ </div>
 
-      login(res.data.user, res.data.token);
-      toast.success(res.message || 'Registrasi berhasil! Selamat bergabung 🎉');
-      navigate('/');
-    } catch (err) {
-      const serverErrors = err.response?.data?.errors;
-      if (serverErrors && typeof serverErrors === 'object') {
-        setErrors(serverErrors);
-        toast.error('Mohon periksa kembali data yang kamu masukkan.');
-      } else {
-        toast.error(err.response?.data?.message || 'Terjadi kesalahan. Coba lagi.');
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
+ <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+ <div>
+ <label className="block font-label-md text-label-md text-on-surface mb-2" htmlFor="password">Password</label>
+ <div className="relative">
+ <input 
+ className="w-full px-4 pr-10 py-3 bg-surface-container-low border border-outline-variant/30 rounded-xl font-body-md text-body-md text-on-surface focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all" 
+ id="password" 
+ name="password"
+ placeholder="Minimal 8 karakter" 
+ type={showPassword ?"text" :"password"}
+ value={form.password}
+ onChange={handleChange}
+ style={{ borderColor: errors.password ? 'var(--color-error)' : undefined }}
+ />
+ <button 
+ className="absolute inset-y-0 right-0 pr-3 flex items-center text-outline hover:text-on-surface transition-colors" 
+ type="button"
+ onClick={() => setShowPassword(!showPassword)}
+ >
+ <span className="material-symbols-outlined text-[20px]">{showPassword ? 'visibility' : 'visibility_off'}</span>
+ </button>
+ </div>
+ 
+ {form.password && (
+ <div className="mt-2 flex gap-1 h-1">
+ {[1, 2, 3].map((lvl) => (
+ <div key={lvl} className="flex-1 rounded-full transition-colors" style={{ backgroundColor: lvl <= pwStrength.level ? pwStrength.color : 'rgba(115, 118, 134, 0.2)' }}></div>
+ ))}
+ </div>
+ )}
+ {errors.password && <p className="text-xs text-error mt-1 font-medium">{errors.password}</p>}
+ </div>
+ <div>
+ <label className="block font-label-md text-label-md text-on-surface mb-2" htmlFor="confirmPassword">Konfirmasi Password</label>
+ <div className="relative">
+ <input 
+ className="w-full px-4 pr-10 py-3 bg-surface-container-low border border-outline-variant/30 rounded-xl font-body-md text-body-md text-on-surface focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all" 
+ id="confirmPassword" 
+ name="confirmPassword"
+ placeholder="Ulangi password" 
+ type={showConfirm ?"text" :"password"}
+ value={form.confirmPassword}
+ onChange={handleChange}
+ style={{ borderColor: errors.confirmPassword ? 'var(--color-error)' : undefined }}
+ />
+ <button 
+ className="absolute inset-y-0 right-0 pr-3 flex items-center text-outline hover:text-on-surface transition-colors" 
+ type="button"
+ onClick={() => setShowConfirm(!showConfirm)}
+ >
+ <span className="material-symbols-outlined text-[20px]">{showConfirm ? 'visibility' : 'visibility_off'}</span>
+ </button>
+ </div>
+ {errors.confirmPassword && <p className="text-xs text-error mt-1 font-medium">{errors.confirmPassword}</p>}
+ </div>
+ </div>
 
-  return (
-    <div
-      className="min-h-screen flex bg-gradient-to-br from-blue-50 via-blue-100 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900"
-    >
-      {/* ── Left Branding Panel ─────────────────────── */}
-      <div
-        className="hidden lg:flex flex-col justify-between w-2/5 p-12 relative overflow-hidden"
-        style={{ background: 'linear-gradient(160deg, #1e3a8a 0%, #1d4ed8 60%, #2563eb 100%)' }}
-      >
-        <div style={{ position: 'absolute', top: -80, right: -60, width: 260, height: 260, borderRadius: '50%', background: 'rgba(255,255,255,0.06)' }} />
-        <div style={{ position: 'absolute', bottom: 40, left: -60, width: 200, height: 200, borderRadius: '50%', background: 'rgba(255,255,255,0.05)' }} />
+ <div className="flex items-start gap-3 mt-4">
+ <input 
+ className="mt-1 w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary focus:ring-2 bg-surface cursor-pointer" 
+ id="reg-terms" 
+ type="checkbox"
+ checked={agreed}
+ onChange={(e) => {
+ setAgreed(e.target.checked);
+ if (errors.terms) setErrors(p => ({ ...p, terms: '' }));
+ }}
+ />
+ <div className="flex flex-col">
+ <label className="font-body-md text-body-md text-on-surface-variant text-sm cursor-pointer" htmlFor="reg-terms">
+ Saya menyetujui <a className="text-primary hover:underline" href="#">Syarat & Ketentuan</a> serta <a className="text-primary hover:underline" href="#">Kebijakan Privasi</a> CampusRent.
+ </label>
+ {errors.terms && <p className="text-xs text-error mt-1 font-medium">{errors.terms}</p>}
+ </div>
+ </div>
 
-        {/* Logo */}
-        <div className="relative z-10 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
-            <BookOpen size={20} color="white" />
-          </div>
-          <span className="text-white font-bold text-xl">CampusRent</span>
-        </div>
-
-        <div className="relative z-10">
-          <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center mb-6">
-            <GraduationCap size={28} color="white" />
-          </div>
-          <h2 className="text-4xl font-bold text-white leading-snug mb-4">
-            Bergabung &
-            <br />
-            mulai hemat! 💰
-          </h2>
-          <p className="text-blue-200 leading-relaxed">
-            Daftarkan dirimu dan akses ribuan barang dari mahasiswa kampus. Gratis, mudah, aman.
-          </p>
-
-          <div className="mt-8 space-y-3">
-            {[
-              { icon: CheckCircle2, text: 'Daftar gratis, tanpa biaya' },
-              { icon: CheckCircle2, text: 'Terverifikasi NIM mahasiswa' },
-              { icon: CheckCircle2, text: 'Data dienkripsi & aman' },
-              { icon: CheckCircle2, text: 'Komunitas mahasiswa aktif' },
-            ].map(({ icon: Icon, text }) => (
-              <div key={text} className="flex items-center gap-3 text-blue-100 text-sm">
-                <Icon size={15} style={{ color: '#86efac', flexShrink: 0 }} />
-                {text}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <p className="relative z-10 text-blue-400 text-xs">
-          © 2024 CampusRent · Platform Mahasiswa
-        </p>
-      </div>
-
-      {/* ── Right Form Panel ────────────────────────── */}
-      <div className="flex-1 flex items-center justify-center p-6 lg:p-12 overflow-y-auto">
-        <div className="w-full max-w-lg py-8">
-
-          {/* Mobile logo */}
-          <div className="flex items-center gap-2 mb-6 lg:hidden">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-              style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)' }}>
-              <BookOpen size={18} color="white" />
-            </div>
-            <span className="font-bold text-xl text-gray-900">
-              Kampus<span className="text-blue-600">Pinjam</span>
-            </span>
-          </div>
-
-          <div className="glass-card p-8 md:p-10">
-            {/* Header */}
-            <div className="mb-7">
-              <h1 className="text-2xl font-bold text-gray-900">Buat Akun Mahasiswa</h1>
-              <p className="text-gray-500 text-sm mt-2">
-                Sudah punya akun?{' '}
-                <Link to="/login" className="text-blue-600 font-semibold hover:underline">
-                  Masuk di sini
-                </Link>
-              </p>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-
-              {/* ── Nama Lengkap ── */}
-              <InputField id="reg-nama" label="Nama Lengkap *" icon={User} error={errors.nama}>
-                <input
-                  id="reg-nama"
-                  name="nama"
-                  type="text"
-                  placeholder="Nama lengkap kamu"
-                  value={form.nama}
-                  onChange={handleChange}
-                  className="form-input"
-                  style={{ paddingLeft: 40, borderColor: errors.nama ? '#ef4444' : undefined }}
-                  autoComplete="name"
-                />
-              </InputField>
-
-              {/* ── Email ── */}
-              <InputField id="reg-email" label="Email Kampus *" icon={Mail} error={errors.email}>
-                <input
-                  id="reg-email"
-                  name="email"
-                  type="email"
-                  placeholder="nama@kampus.ac.id"
-                  value={form.email}
-                  onChange={handleChange}
-                  className="form-input"
-                  style={{ paddingLeft: 40, borderColor: errors.email ? '#ef4444' : undefined }}
-                  autoComplete="email"
-                />
-              </InputField>
-
-              {/* ── NIM + Jurusan (2 kolom) ── */}
-              <div className="grid grid-cols-2 gap-3">
-                <InputField
-                  id="reg-nim"
-                  label="NIM"
-                  icon={Hash}
-                  error={errors.nim}
-                  hint="Opsional"
-                >
-                  <input
-                    id="reg-nim"
-                    name="nim"
-                    type="text"
-                    inputMode="numeric"
-                    placeholder="2021xxxxxxx"
-                    value={form.nim}
-                    onChange={handleChange}
-                    className="form-input"
-                    style={{ paddingLeft: 38, borderColor: errors.nim ? '#ef4444' : undefined }}
-                  />
-                </InputField>
-
-                <InputField
-                  id="reg-jurusan"
-                  label="Jurusan / Prodi"
-                  icon={Layers}
-                  error={errors.jurusan}
-                  hint="Opsional"
-                >
-                  <select
-                    id="reg-jurusan"
-                    name="jurusan"
-                    value={form.jurusan}
-                    onChange={handleChange}
-                    className="form-input appearance-none"
-                    style={{ paddingLeft: 38 }}
-                  >
-                    <option value="">Pilih Jurusan</option>
-                    {JURUSAN_LIST.map((j) => (
-                      <option key={j} value={j}>{j}</option>
-                    ))}
-                  </select>
-                </InputField>
-              </div>
-
-              {/* ── Universitas + WhatsApp ── */}
-              <div className="grid grid-cols-2 gap-3">
-                <InputField
-                  id="reg-universitas"
-                  label="Universitas"
-                  icon={GraduationCap}
-                  error={errors.universitas}
-                  hint="Cth: Universitas Brawijaya"
-                >
-                  <input
-                    id="reg-universitas"
-                    name="universitas"
-                    type="text"
-                    placeholder="Nama Universitas"
-                    value={form.universitas}
-                    onChange={handleChange}
-                    className="form-input"
-                    style={{ paddingLeft: 38 }}
-                  />
-                </InputField>
-
-                <InputField
-                  id="reg-whatsapp"
-                  label="Nomor WhatsApp"
-                  icon={Phone}
-                  error={errors.whatsapp}
-                  hint="Untuk koordinasi pinjam"
-                >
-                  <input
-                    id="reg-whatsapp"
-                    name="whatsapp"
-                    type="tel"
-                    placeholder="08xxxxxxxxxx"
-                    value={form.whatsapp}
-                    onChange={handleChange}
-                    className="form-input"
-                    style={{ paddingLeft: 38, borderColor: errors.whatsapp ? '#ef4444' : undefined }}
-                    autoComplete="tel"
-                  />
-                </InputField>
-              </div>
-
-              {/* ── Password ── */}
-              <div>
-                <label htmlFor="reg-password" className="form-label">Password *</label>
-                <div className="relative">
-                  <Lock size={15} style={{
-                    position: 'absolute', left: 13, top: '50%',
-                    transform: 'translateY(-50%)', color: errors.password ? '#ef4444' : '#9ca3af',
-                  }} />
-                  <input
-                    id="reg-password"
-                    name="password"
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="Minimal 8 karakter"
-                    value={form.password}
-                    onChange={handleChange}
-                    className="form-input"
-                    style={{ paddingLeft: 38, paddingRight: 44, borderColor: errors.password ? '#ef4444' : undefined }}
-                    autoComplete="new-password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 p-1"
-                    aria-label="Toggle password"
-                  >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-
-                {/* Password strength bar */}
-                {form.password && (
-                  <div className="mt-2">
-                    <div className="flex gap-1">
-                      {[1, 2, 3, 4].map((lvl) => (
-                        <div
-                          key={lvl}
-                          className="h-1.5 flex-1 rounded-full transition-all duration-300"
-                          style={{ background: lvl <= pwStrength.level ? pwStrength.color : '#e5e7eb' }}
-                        />
-                      ))}
-                    </div>
-                    <p className="text-xs mt-1 font-medium" style={{ color: pwStrength.color }}>
-                      {pwStrength.label}
-                    </p>
-                  </div>
-                )}
-                {errors.password && (
-                  <p className="text-xs text-red-500 mt-1.5 font-medium">{errors.password}</p>
-                )}
-              </div>
-
-              {/* ── Konfirmasi Password ── */}
-              <div>
-                <label htmlFor="reg-confirm" className="form-label">Konfirmasi Password *</label>
-                <div className="relative">
-                  <Lock size={15} style={{
-                    position: 'absolute', left: 13, top: '50%',
-                    transform: 'translateY(-50%)', color: errors.confirmPassword ? '#ef4444' : '#9ca3af',
-                  }} />
-                  <input
-                    id="reg-confirm"
-                    name="confirmPassword"
-                    type={showConfirm ? 'text' : 'password'}
-                    placeholder="Ulangi password"
-                    value={form.confirmPassword}
-                    onChange={handleChange}
-                    className="form-input"
-                    style={{ paddingLeft: 38, paddingRight: 44, borderColor: errors.confirmPassword ? '#ef4444' : undefined }}
-                    autoComplete="new-password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirm(!showConfirm)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 p-1"
-                    aria-label="Toggle confirm password"
-                  >
-                    {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-                {form.confirmPassword && form.password === form.confirmPassword && (
-                  <p className="text-xs text-emerald-600 mt-1.5 font-medium flex items-center gap-1">
-                    <CheckCircle2 size={12} /> Password cocok
-                  </p>
-                )}
-                {errors.confirmPassword && (
-                  <p className="text-xs text-red-500 mt-1.5 font-medium">{errors.confirmPassword}</p>
-                )}
-              </div>
-
-              {/* ── Terms ── */}
-              <div>
-                <label className="flex items-start gap-3 cursor-pointer select-none">
-                  <input
-                    id="reg-terms"
-                    type="checkbox"
-                    checked={agreed}
-                    onChange={(e) => {
-                      setAgreed(e.target.checked);
-                      if (errors.terms) setErrors((p) => ({ ...p, terms: '' }));
-                    }}
-                    className="mt-0.5 w-4 h-4 rounded accent-blue-600 flex-shrink-0"
-                  />
-                  <span className="text-sm text-gray-600 leading-snug">
-                    Saya menyetujui{' '}
-                    <Link to="/terms" className="text-blue-600 hover:underline font-medium">
-                      Syarat & Ketentuan
-                    </Link>{' '}
-                    dan{' '}
-                    <Link to="/privacy" className="text-blue-600 hover:underline font-medium">
-                      Kebijakan Privasi
-                    </Link>{' '}
-                    CampusRent
-                  </span>
-                </label>
-                {errors.terms && (
-                  <p className="text-xs text-red-500 mt-1.5 font-medium">{errors.terms}</p>
-                )}
-              </div>
-
-              {/* ── Submit ── */}
-              <button
-                id="register-submit-btn"
-                type="submit"
-                disabled={isLoading}
-                className="btn-primary w-full py-3.5 text-base mt-2"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 size={18} className="animate-spin" />
-                    Mendaftarkan akun...
-                  </>
-                ) : (
-                  <>
-                    Daftar Sekarang <ArrowRight size={18} />
-                  </>
-                )}
-              </button>
-            </form>
-          </div>
-
-          <p className="text-center text-xs text-gray-400 mt-5 flex items-center justify-center gap-1.5">
-            <ShieldCheck size={13} style={{ color: '#10b981' }} />
-            Data dienkripsi dengan bcrypt & JWT
-          </p>
-        </div>
-      </div>
-    </div>
-  );
+ <button 
+ disabled={isLoading}
+ className="w-full py-4 mt-6 bg-primary text-on-primary font-title-md text-title-md rounded-xl hover:bg-primary-container transition-all flex items-center justify-center gap-2 group shadow-lg shadow-primary/20 disabled:opacity-70 disabled:cursor-not-allowed" 
+ type="submit"
+ >
+ {isLoading ? (
+ <>
+ <span className="material-symbols-outlined animate-spin">refresh</span>
+ Mendaftarkan...
+ </>
+ ) : (
+ <>
+ Daftar Sekarang 
+ <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+ </>
+ )}
+ </button>
+ </form>
+ 
+ <div className="mt-6 text-center">
+ <p className="font-body-md text-body-md text-on-surface-variant">
+ Sudah punya akun? 
+ <Link to="/login" className="font-title-md text-title-md text-primary hover:underline underline-offset-4 ml-1 focus:outline-none">Masuk di sini</Link>
+ </p>
+ </div>
+ 
+ </div>
+ </div>
+ </main>
+ </div>
+ );
 };
 
 export default Register;
-

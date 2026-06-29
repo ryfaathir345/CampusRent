@@ -3,13 +3,9 @@ import adminService from '../../services/admin.service';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 
-const API_URL = import.meta.env.VITE_API_URL || '/api';
-const UPLOADS_URL = API_URL.replace('/api', '');
-
 const AdminUsers = () => {
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [expandedUser, setExpandedUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const { user: currentUser } = useAuth();
   
@@ -51,18 +47,11 @@ const AdminUsers = () => {
     }
   };
 
-  const toggleExpand = (userId) => {
-    setExpandedUser(expandedUser === userId ? null : userId);
-  };
-
   const filteredUsers = users.filter(u => 
     u.nama?.toLowerCase().includes(searchTerm.toLowerCase()) || 
     u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     u.nim?.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  const activeUsers = users.filter(u => !u.isSuspended).length;
-  const suspendedUsers = users.filter(u => u.isSuspended).length;
 
   if (isLoading) {
     return (
@@ -73,200 +62,144 @@ const AdminUsers = () => {
   }
 
   return (
-    <div className="animate-fade-in space-y-6">
-      
-      {/* Top Section with Title and Search */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-        <h2 className="font-bold text-gray-800 text-title-md dark:text-white/90">Users Management</h2>
+    <>
+      {/* Page Header & Stats Bento */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-stack-md">
+        <div className="md:col-span-2 glass-panel p-stack-lg rounded-xl shadow-sm border border-outline-variant/10">
+          <h1 className="font-headline-lg text-headline-lg text-on-surface">Manajemen Pengguna</h1>
+          <p className="text-body-md text-on-surface-variant mt-2">Pantau, verifikasi, dan kelola status akun mahasiswa di seluruh platform CampusRent.</p>
+          <div className="flex flex-wrap gap-stack-sm mt-6">
+            <button className="px-4 py-2 bg-primary text-on-primary font-label-md rounded-full shadow-lg hover:shadow-primary/20 transition-all flex items-center gap-2">
+              <span className="material-symbols-outlined text-[20px]">person_add</span>
+              Tambah Pengguna
+            </button>
+            <button className="px-4 py-2 border border-outline text-on-surface-variant font-label-md rounded-full hover:bg-surface-container transition-all flex items-center gap-2">
+              <span className="material-symbols-outlined text-[20px]">download</span>
+              Ekspor CSV
+            </button>
+          </div>
+        </div>
+        <div className="glass-panel p-stack-lg rounded-xl shadow-sm border border-outline-variant/10 flex flex-col justify-between">
+          <div>
+            <span className="text-label-sm font-label-sm uppercase tracking-wider text-primary">Total Mahasiswa</span>
+            <div className="text-display-lg font-display-lg text-primary mt-2">{users.length}</div>
+          </div>
+          <div className="flex items-center gap-2 text-secondary text-label-md mt-4">
+            <span className="material-symbols-outlined">group</span>
+            <span>{users.filter(u => !u.isSuspended).length} Aktif</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Role Selector Notice */}
+      <div className="flex items-center justify-between glass-panel p-stack-sm rounded-xl border border-outline-variant/10 px-4">
+        <div className="flex items-center gap-4">
+          <span className="text-label-md font-bold">Mode Tampilan:</span>
+          <div className="flex bg-surface-container p-1 rounded-lg">
+            <button className={`px-4 py-1.5 rounded-md text-label-md font-bold transition-all shadow-sm ${!isOwner ? 'bg-primary text-white' : 'text-on-surface-variant'}`}>Admin</button>
+            <button className={`px-4 py-1.5 rounded-md text-label-md font-bold transition-all shadow-sm ${isOwner ? 'bg-primary-container text-white' : 'text-on-surface-variant'}`}>Owner</button>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 text-label-sm text-on-surface-variant italic">
+          <span className="material-symbols-outlined text-sm">info</span>
+          <span>{isOwner ? 'Owner View: Semua fitur manajemen terbuka.' : 'Role Admin tidak bisa mengubah jabatan user lain.'}</span>
+        </div>
+      </div>
+
+      {/* Filters & Search */}
+      <div className="glass-panel p-stack-md rounded-xl border border-outline-variant/10 flex flex-wrap gap-4 items-center justify-between">
         <div className="relative w-full md:w-96">
-          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">search</span>
+          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
           <input 
-            type="text" 
-            placeholder="Search by name, email, or NIM..." 
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none" 
+            placeholder="Cari nama, NIM, atau jurusan..." 
+            type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-transparent border border-gray-200 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all text-sm text-gray-800 dark:text-white/90 placeholder-gray-400"
           />
         </div>
       </div>
 
-      {/* Dashboard Stats Row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6 flex items-center justify-between group hover:shadow-theme-sm transition-all">
-          <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wider font-medium">Total Users</p>
-            <h3 className="text-title-md font-bold text-gray-800 dark:text-white/90 mt-1">{users.length}</h3>
-          </div>
-          <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-800 group-hover:bg-brand-500 group-hover:text-white transition-colors flex items-center justify-center text-gray-800 dark:text-white/90">
-            <span className="material-symbols-outlined text-[24px]">group</span>
-          </div>
-        </div>
-        
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6 flex items-center justify-between group hover:shadow-theme-sm transition-all">
-          <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wider font-medium">Active Users</p>
-            <h3 className="text-title-md font-bold text-gray-800 dark:text-white/90 mt-1">{activeUsers}</h3>
-          </div>
-          <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-800 group-hover:bg-success-500 group-hover:text-white transition-colors flex items-center justify-center text-gray-800 dark:text-white/90">
-            <span className="material-symbols-outlined text-[24px]">bolt</span>
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6 flex items-center justify-between group hover:shadow-theme-sm transition-all">
-          <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wider font-medium">Suspended</p>
-            <h3 className="text-title-md font-bold text-gray-800 dark:text-white/90 mt-1">{suspendedUsers}</h3>
-          </div>
-          <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-800 group-hover:bg-error-500 group-hover:text-white transition-colors flex items-center justify-center text-gray-800 dark:text-white/90">
-            <span className="material-symbols-outlined text-[24px]">block</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Table Section */}
-      <section className="bg-white rounded-2xl border border-gray-200 dark:border-gray-800 dark:bg-white/[0.03] overflow-hidden">
-        <div className="overflow-x-auto">
+      {/* Data Table */}
+      <div className="glass-panel rounded-xl border border-outline-variant/10 shadow-md overflow-hidden">
+        <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full text-left border-collapse">
-            <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
+            <thead className="bg-surface-container text-on-surface-variant font-label-md">
               <tr>
-                <th className="w-12 px-6 py-4"></th>
-                <th className="px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">User</th>
-                <th className="px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">NIM</th>
-                <th className="px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Department</th>
-                <th className="px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">Actions</th>
+                <th className="px-6 py-4 font-bold">Nama / NIM</th>
+                <th className="px-6 py-4 font-bold">Jurusan</th>
+                <th className="px-6 py-4 font-bold">Role</th>
+                <th className="px-6 py-4 font-bold text-center">Status</th>
+                <th className="px-6 py-4 font-bold">Email</th>
+                <th className="px-6 py-4 font-bold text-right">Aksi</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-              {filteredUsers.length === 0 ? (
-                <tr>
-                  <td colSpan="6" className="text-center py-8 text-gray-500 dark:text-gray-400">No users found</td>
-                </tr>
-              ) : filteredUsers.map(u => (
-                <React.Fragment key={u.id}>
-                  <tr className="group hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer" onClick={() => toggleExpand(u.id)}>
-                    <td className="px-6 py-4">
-                      <button className="p-1 hover:bg-brand-50 dark:hover:bg-brand-500/10 rounded-full transition-all text-brand-500">
-                        <span 
-                          className="material-symbols-outlined transition-transform duration-300" 
-                          style={{ transform: expandedUser === u.id ? 'rotate(180deg)' : 'rotate(0deg)' }}
-                        >
-                          expand_more
-                        </span>
-                      </button>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-brand-100 dark:bg-brand-500/20 text-brand-600 dark:text-brand-400 flex items-center justify-center font-bold">
-                          {u.nama ? u.nama.charAt(0).toUpperCase() : 'U'}
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-800 dark:text-white/90">{u.nama}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">{u.email}</p>
-                        </div>
+            <tbody className="divide-y divide-outline-variant/20">
+              {filteredUsers.map(u => (
+                <tr key={u.id} className={`hover:bg-primary/5 transition-colors group ${u.isSuspended ? 'bg-error/5' : ''}`}>
+                  <td className="px-6 py-5">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary-container flex items-center justify-center text-white font-bold text-lg">
+                        {u.nama ? u.nama.charAt(0).toUpperCase() : 'U'}
                       </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">{u.nim || '-'}</td>
-                    <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">{u.jurusan || '-'}</td>
-                    <td className="px-6 py-4">
-                      <div className="flex flex-wrap gap-2 items-center">
-                        {u.isSuspended ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-error-50 text-error-600 dark:bg-error-500/10 dark:text-error-500">Suspended</span>
-                        ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-success-50 text-success-600 dark:bg-success-500/10 dark:text-success-500">Active</span>
-                        )}
-                        {u.role === 'ADMIN' && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 border border-purple-200 dark:border-purple-800">
-                            🛡️ Admin
-                          </span>
-                        )}
+                      <div>
+                        <div className="font-bold text-on-surface">{u.nama}</div>
+                        <div className="text-label-sm text-on-surface-variant">{u.nim || '-'}</div>
                       </div>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex justify-end gap-2 flex-wrap max-w-[150px] ml-auto">
-                        {isOwner && (
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleUpdateRole(u.id, u.role === 'ADMIN' ? 'MAHASISWA' : 'ADMIN'); }}
-                            className={`px-3 py-1 border rounded-full text-[10px] font-bold transition-colors ${
-                              u.role === 'ADMIN'
-                                ? 'border-orange-200 text-orange-600 hover:bg-orange-50 dark:border-orange-500/30 dark:text-orange-500 dark:hover:bg-orange-500/10'
-                                : 'border-purple-200 text-purple-600 hover:bg-purple-50 dark:border-purple-500/30 dark:text-purple-400 dark:hover:bg-purple-500/10'
-                            }`}
-                          >
-                            {u.role === 'ADMIN' ? 'Hapus Admin' : 'Jadikan Admin'}
-                          </button>
-                        )}
-                        
+                    </div>
+                  </td>
+                  <td className="px-6 py-5 text-body-md text-on-surface-variant">{u.jurusan || '-'}</td>
+                  <td className="px-6 py-5">
+                    <span className={`px-3 py-1 font-label-sm rounded-full border ${u.role === 'ADMIN' || u.role === 'OWNER' ? 'bg-tertiary-container/10 text-tertiary border-tertiary/20 font-bold' : 'bg-surface-container-highest text-primary border-primary/10'}`}>
+                      {u.role === 'ADMIN' ? 'Admin' : u.role === 'OWNER' ? 'Owner' : 'Mahasiswa'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-5">
+                    <div className="flex flex-col gap-1 items-center">
+                      <div className={`flex items-center gap-1.5 text-label-sm font-bold ${u.isVerified ? 'text-secondary' : 'text-outline'}`}>
+                        <span className="material-symbols-outlined text-[16px]" style={u.isVerified ? { fontVariationSettings: "'FILL' 1" } : {}}>{u.isVerified ? 'verified' : 'hourglass_empty'}</span>
+                        {u.isVerified ? 'Terverifikasi' : 'Belum Verifikasi'}
+                      </div>
+                      {u.isSuspended ? (
+                        <span className="px-2 py-0.5 bg-error-container text-on-error-container text-[10px] uppercase font-bold rounded">Suspended</span>
+                      ) : (
+                        <span className="px-2 py-0.5 bg-secondary-container/30 text-on-secondary-container text-[10px] uppercase font-bold rounded">Aktif</span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-5 font-bold text-on-surface">{u.email}</td>
+                  <td className="px-6 py-5 text-right">
+                    <div className="flex justify-end gap-2">
+                      {isOwner && (
                         <button 
-                          onClick={(e) => { e.stopPropagation(); handleToggleSuspend(u.id); }}
-                          className={`px-3 py-1 border rounded-full text-[10px] font-bold transition-colors ${
-                            u.isSuspended 
-                              ? 'border-success-200 text-success-600 hover:bg-success-50 dark:border-success-500/30 dark:text-success-500 dark:hover:bg-success-500/10' 
-                              : 'border-error-200 text-error-600 hover:bg-error-50 dark:border-error-500/30 dark:text-error-500 dark:hover:bg-error-500/10'
-                          }`}
+                          onClick={() => handleUpdateRole(u.id, u.role === 'ADMIN' ? 'MAHASISWA' : 'ADMIN')}
+                          className="p-2 rounded-lg text-primary hover:bg-primary/10 transition-all" 
+                          title="Ubah Role"
                         >
-                          {u.isSuspended ? 'Restore' : 'Suspend'}
+                          <span className="material-symbols-outlined">swap_horiz</span>
                         </button>
-                      </div>
-                    </td>
-                  </tr>
-                  
-                  {/* Expandable Content for Items Owned */}
-                  {expandedUser === u.id && (
-                    <tr className="bg-gray-50/50 dark:bg-gray-800/20">
-                      <td className="px-6 py-0 overflow-hidden" colSpan="6">
-                        <div className="py-4 border-l-2 border-brand-500 ml-6 pl-6 my-4">
-                          <h4 className="text-sm font-medium text-gray-800 dark:text-white/90 mb-4 flex items-center gap-2">
-                            <span className="material-symbols-outlined text-brand-500 text-sm">inventory</span>
-                            Items Owned ({u.items?.length || 0})
-                          </h4>
-                          
-                          {u.items && u.items.length > 0 ? (
-                            <table className="w-full bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
-                              <thead className="bg-gray-50 dark:bg-gray-800/50">
-                                <tr>
-                                  <th className="px-4 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 text-left">Item Name</th>
-                                  <th className="px-4 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 text-left">Category</th>
-                                  <th className="px-4 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 text-left">Status</th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                                {u.items.map(item => (
-                                  <tr key={item.id}>
-                                    <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 flex items-center gap-3">
-                                      <div className="w-8 h-8 rounded bg-gray-100 dark:bg-gray-800 overflow-hidden shrink-0">
-                                        {item.fotoBarang && <img src={`${UPLOADS_URL}${item.fotoBarang.split(',')[0]}`} alt="" className="w-full h-full object-cover" />}
-                                      </div>
-                                      {item.namaBarang}
-                                    </td>
-                                    <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{item.kategori}</td>
-                                    <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                                        item.statusBarang === 'TERSEDIA' 
-                                        ? 'bg-success-50 text-success-600 dark:bg-success-500/10 dark:text-success-500' 
-                                        : 'bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400'
-                                      }`}>
-                                        {item.statusBarang}
-                                      </span>
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          ) : (
-                            <p className="text-gray-500 dark:text-gray-400 italic text-sm">This user has not listed any items for rent yet.</p>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </React.Fragment>
+                      )}
+                      <button 
+                        onClick={() => handleToggleSuspend(u.id)}
+                        className={`p-2 rounded-lg transition-all ${u.isSuspended ? 'text-secondary hover:bg-secondary/10' : 'text-error hover:bg-error/10'}`} 
+                        title={u.isSuspended ? 'Restore User' : 'Suspend User'}
+                      >
+                        <span className="material-symbols-outlined">{u.isSuspended ? 'check_circle' : 'block'}</span>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
               ))}
+              {filteredUsers.length === 0 && (
+                <tr>
+                  <td colSpan="6" className="text-center py-8 text-on-surface-variant">Data tidak ditemukan</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
-      </section>
-    </div>
+      </div>
+    </>
   );
 };
 

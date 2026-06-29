@@ -1,13 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import adminService from '../../services/admin.service';
-import EcommerceMetrics from "../../tailadmin/components/ecommerce/EcommerceMetrics";
-import MonthlySalesChart from "../../tailadmin/components/ecommerce/MonthlySalesChart";
-import StatisticsChart from "../../tailadmin/components/ecommerce/StatisticsChart";
-import MonthlyTarget from "../../tailadmin/components/ecommerce/MonthlyTarget";
-import RecentOrders from "../../tailadmin/components/ecommerce/RecentOrders";
-import DemographicCard from "../../tailadmin/components/ecommerce/DemographicCard";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from '../../context/AuthContext';
 
 const AdminOverview = () => {
   const { user } = useAuth();
@@ -31,101 +25,163 @@ const AdminOverview = () => {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-[calc(100vh-200px)]">
-        <div className="animate-spin h-10 w-10 border-b-2 border-brand-500 rounded-full"></div>
+        <div className="animate-spin h-10 w-10 border-b-2 border-primary rounded-full"></div>
       </div>
     );
   }
 
   return (
-    <div>
-      {user?.role === 'OWNER' && (
-        <div className="mb-6 relative overflow-hidden rounded-2xl bg-gradient-to-r from-rose-500 via-purple-500 to-blue-500 p-1 shadow-2xl animate-gradient-x">
-          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-30 animate-pulse"></div>
-          <div className="relative z-10 flex items-center justify-between p-6">
-            <div className="text-left text-white max-w-xl">
-              <h2 className="text-2xl md:text-3xl font-black tracking-tight drop-shadow-lg flex items-center gap-3 mb-2">
-                <span className="bg-white/20 p-2 rounded-xl border border-white/30 backdrop-blur-md shadow-lg text-2xl">👑</span> 
-                Paduka Raja {user?.nama?.split(' ')[0]} <span className="animate-pulse text-xl">✨</span>
-              </h2>
-              <p className="text-sm md:text-base font-medium text-white/90 drop-shadow-md leading-relaxed">
-                Selamat datang di Singgasana CampusRent! Jangan lupa cek cuan hari ini ya Bos! 💸💅
-              </p>
+    <>
+      <header className="flex flex-col gap-stack-xs">
+        <h1 className="font-headline-lg text-headline-lg text-on-surface">Admin Overview</h1>
+        <p className="font-body-md text-body-md text-on-surface-variant">Halo {user?.name || 'Admin'}, ini adalah ringkasan performa platform hari ini.</p>
+      </header>
+
+      {/* BENTO GRID STATS */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+        {/* Card 1 */}
+        <div className="glass-panel p-stack-lg rounded-xl border border-white/20 shadow-md bg-surface-container-lowest flex flex-col gap-2 relative overflow-hidden group">
+          <div className="flex justify-between items-start">
+            <div className="p-2 bg-primary/10 rounded-lg text-primary">
+              <span className="material-symbols-outlined">group</span>
             </div>
-            
-            {/* Crown Decoration on the right */}
-            <div className="hidden md:flex relative right-2 items-center justify-center">
-              <div className="absolute w-24 h-24 bg-yellow-500/30 blur-[30px] rounded-full animate-pulse"></div>
-              <span className="text-[70px] leading-none drop-shadow-[0_10px_30px_rgba(255,215,0,0.5)] transform rotate-12 hover:rotate-0 transition-transform duration-500 cursor-default">
-                👑
-              </span>
-            </div>
+            <span className="text-primary font-label-sm flex items-center gap-1">
+              <span className="material-symbols-outlined text-sm">trending_up</span> Aktif: {stats?.onlineUsers || 0}
+            </span>
           </div>
-        </div>
-      )}
-      
-      <div className="grid grid-cols-12 gap-4 md:gap-6 animate-fade-in">
-        {/* ROW 1: 4 Metric Cards */}
-        <div className="col-span-12">
-          <EcommerceMetrics
-            totalUsers={stats?.totalUsers}
-            onlineUsers={stats?.onlineUsers}
-            totalItems={stats?.totalItems}
-            activeItems={stats?.activeItems}
-            totalRevenue={stats?.totalRevenue}
-            averageSpending={stats?.averageSpending}
-          />
-        </div>
-
-        {/* ROW 2: Monthly Sales Chart (Span 8) and Quick Actions (Span 4) */}
-        <div className="col-span-12 xl:col-span-8">
-          <MonthlySalesChart />
-        </div>
-
-        <div className="col-span-12 xl:col-span-4 space-y-6">
-          <div className="rounded-2xl border border-[#2d2e42] bg-[#1a1b2e] p-5 shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
-            <h3 className="mb-5 text-lg font-bold text-white flex items-center gap-2">
-              <span className="text-purple-400">⚡</span> Quick Actions
-            </h3>
-            <div className="grid grid-cols-2 gap-4">
-              <Link to="/admin/items" className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-300 hover:bg-purple-500/20 transition">
-                <span className="text-2xl">📦</span>
-                <span className="text-xs font-semibold">Tambah Item</span>
-              </Link>
-              <Link to="/admin/ktm" className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-300 hover:bg-blue-500/20 transition">
-                <span className="text-2xl">💳</span>
-                <span className="text-xs font-semibold">Verifikasi KTM</span>
-              </Link>
-              <Link to="/admin/reports" className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-pink-500/10 border border-pink-500/20 text-pink-300 hover:bg-pink-500/20 transition">
-                <span className="text-2xl">📊</span>
-                <span className="text-xs font-semibold">Laporan</span>
-              </Link>
-              <Link to="/admin/users" className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-300 hover:bg-orange-500/20 transition">
-                <span className="text-2xl">👥</span>
-                <span className="text-xs font-semibold">Kelola Users</span>
-              </Link>
-            </div>
+          <div className="mt-4">
+            <span className="font-label-md text-label-md text-on-surface-variant">Total Pengguna</span>
+            <h2 className="font-headline-lg text-headline-lg text-on-surface mt-1">{stats?.totalUsers || 0}</h2>
+          </div>
+          <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:scale-110 transition-transform duration-700">
+            <span className="material-symbols-outlined text-[120px]">group</span>
           </div>
         </div>
 
-        {/* ROW 3: Recent Orders (Span 8) and Monthly Target (Span 4) */}
-        <div className="col-span-12 xl:col-span-8">
-          <RecentOrders />
+        {/* Card 2 */}
+        <div className="glass-panel p-stack-lg rounded-xl border border-white/20 shadow-md bg-surface-container-lowest flex flex-col gap-2 relative overflow-hidden group">
+          <div className="flex justify-between items-start">
+            <div className="p-2 bg-error/10 rounded-lg text-error">
+              <span className="material-symbols-outlined">inventory_2</span>
+            </div>
+            <span className="text-on-surface-variant font-label-sm">Aktif: {stats?.activeItems || 0}</span>
+          </div>
+          <div className="mt-4">
+            <span className="font-label-md text-label-md text-on-surface-variant">Total Barang</span>
+            <h2 className="font-headline-lg text-headline-lg text-on-surface mt-1">{stats?.totalItems || 0}</h2>
+          </div>
+          <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:scale-110 transition-transform duration-700">
+            <span className="material-symbols-outlined text-[120px]">inventory_2</span>
+          </div>
         </div>
 
-        <div className="col-span-12 xl:col-span-4">
-          <MonthlyTarget />
-        </div>
-
-        {/* ROW 4: Extra Charts */}
-        <div className="col-span-12 xl:col-span-7">
-          <StatisticsChart />
-        </div>
-
-        <div className="col-span-12 xl:col-span-5">
-          <DemographicCard />
+        {/* Card 3 */}
+        <div className="glass-panel p-stack-lg rounded-xl border border-white/20 shadow-md bg-surface-container-lowest flex flex-col gap-2 relative overflow-hidden group">
+          <div className="flex justify-between items-start">
+            <div className="p-2 bg-secondary/10 rounded-lg text-secondary">
+              <span className="material-symbols-outlined">receipt_long</span>
+            </div>
+            <span className="text-secondary font-label-sm flex items-center gap-1">
+              <span className="material-symbols-outlined text-sm">payments</span> Avg: Rp {(stats?.averageSpending || 0).toLocaleString()}
+            </span>
+          </div>
+          <div className="mt-4">
+            <span className="font-label-md text-label-md text-on-surface-variant">Total Pendapatan</span>
+            <h2 className="font-headline-lg text-headline-lg text-on-surface mt-1">Rp {(stats?.totalRevenue || 0).toLocaleString()}</h2>
+          </div>
+          <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:scale-110 transition-transform duration-700">
+            <span className="material-symbols-outlined text-[120px]">payments</span>
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* MAIN DATA AREA (ASYMMETRIC) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
+        {/* Quick Actions / Recent Activity (Left/Center) */}
+        <div className="lg:col-span-2 flex flex-col gap-stack-lg">
+          <div className="flex justify-between items-end px-2">
+            <h3 className="font-title-md text-title-md text-on-surface">Akses Cepat</h3>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <Link to="/admin/items" className="bg-surface-container-lowest rounded-xl p-stack-md flex items-center gap-4 border border-outline-variant/10 shadow-sm hover:shadow-md transition-all group">
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary flex-shrink-0 group-hover:scale-110 transition-transform">
+                <span className="material-symbols-outlined">inventory_2</span>
+              </div>
+              <div className="flex-1">
+                <h4 className="font-title-md text-sm text-on-surface">Moderasi Barang</h4>
+                <p className="text-xs text-on-surface-variant">Kelola barang sewaan</p>
+              </div>
+            </Link>
+            <Link to="/admin/ktm" className="bg-surface-container-lowest rounded-xl p-stack-md flex items-center gap-4 border border-outline-variant/10 shadow-sm hover:shadow-md transition-all group">
+              <div className="w-12 h-12 rounded-full bg-error/10 flex items-center justify-center text-error flex-shrink-0 group-hover:scale-110 transition-transform">
+                <span className="material-symbols-outlined">id_card</span>
+              </div>
+              <div className="flex-1">
+                <h4 className="font-title-md text-sm text-on-surface">Verifikasi KTM</h4>
+                <p className="text-xs text-on-surface-variant">Tinjau mahasiswa baru</p>
+              </div>
+            </Link>
+            <Link to="/admin/reports" className="bg-surface-container-lowest rounded-xl p-stack-md flex items-center gap-4 border border-outline-variant/10 shadow-sm hover:shadow-md transition-all group">
+              <div className="w-12 h-12 rounded-full bg-secondary/10 flex items-center justify-center text-secondary flex-shrink-0 group-hover:scale-110 transition-transform">
+                <span className="material-symbols-outlined">report</span>
+              </div>
+              <div className="flex-1">
+                <h4 className="font-title-md text-sm text-on-surface">Laporan</h4>
+                <p className="text-xs text-on-surface-variant">Lihat keluhan & masukan</p>
+              </div>
+            </Link>
+            <Link to="/admin/users" className="bg-surface-container-lowest rounded-xl p-stack-md flex items-center gap-4 border border-outline-variant/10 shadow-sm hover:shadow-md transition-all group">
+              <div className="w-12 h-12 rounded-full bg-tertiary/10 flex items-center justify-center text-tertiary flex-shrink-0 group-hover:scale-110 transition-transform">
+                <span className="material-symbols-outlined">group</span>
+              </div>
+              <div className="flex-1">
+                <h4 className="font-title-md text-sm text-on-surface">Kelola Pengguna</h4>
+                <p className="text-xs text-on-surface-variant">Manajemen akun</p>
+              </div>
+            </Link>
+          </div>
+        </div>
+
+        {/* Platform Activity/Health (Right) */}
+        <div className="flex flex-col gap-stack-lg">
+          <h3 className="font-title-md text-title-md text-on-surface px-2">Kesehatan Platform</h3>
+          <div className="bg-surface-container-lowest rounded-xl p-stack-lg border border-outline-variant/10 shadow-sm flex flex-col gap-stack-md">
+            <div className="flex items-center justify-between">
+              <span className="font-label-md text-on-surface-variant">Server Status</span>
+              <span className="flex items-center gap-1.5 text-secondary font-bold text-xs">
+                <span className="w-2 h-2 bg-secondary rounded-full animate-pulse"></span> Optimal
+              </span>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-on-surface-variant">API Response Time</span>
+                  <span className="font-bold">120ms</span>
+                </div>
+                <div className="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+                  <div className="h-full bg-primary rounded-full" style={{ width: '85%' }}></div>
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-on-surface-variant">Keamanan Transaksi</span>
+                  <span className="font-bold">99.9%</span>
+                </div>
+                <div className="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+                  <div className="h-full bg-secondary rounded-full" style={{ width: '98%' }}></div>
+                </div>
+              </div>
+            </div>
+            <div className="mt-4 pt-4 border-t border-outline-variant/20">
+              <div className="p-4 rounded-lg bg-primary/5 border border-primary/10 flex items-start gap-3">
+                <span className="material-symbols-outlined text-primary">info</span>
+                <p className="text-xs text-on-surface-variant leading-relaxed">System maintenance dijadwalkan pada hari Minggu, 02:00 WIB.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
   );
 };
 

@@ -58,8 +58,8 @@ const register = asyncHandler(async (req, res) => {
     return errorResponse(res, 400, 'Hanya email kampus (.ac.id) yang diizinkan untuk mendaftar.');
   }
 
-  // Karena semua harus pakai email kampus, otomatis verified
-  const isVerified = true;
+  // Default isVerified false, harus verifikasi KTM dulu
+  const isVerified = false;
 
   // Buat user baru
   const user = await prisma.user.create({
@@ -116,18 +116,6 @@ const login = asyncHandler(async (req, res) => {
 
   if (user.isSuspended) {
     return errorResponse(res, 403, 'Akun Anda telah di-suspend oleh Admin.');
-  }
-
-  // Check if there's an active login token
-  if (user.currentLoginToken) {
-    try {
-      jwt.verify(user.currentLoginToken, process.env.JWT_SECRET);
-      // If verification succeeds, token is still active and valid!
-      return errorResponse(res, 403, 'Akun ini sedang digunakan di perangkat lain. Harap log out terlebih dahulu.');
-    } catch (err) {
-      // If token verification fails (expired or invalid), it means the previous session is dead.
-      // We can safely allow login to proceed.
-    }
   }
 
   const token = generateToken(user.id, user.role);

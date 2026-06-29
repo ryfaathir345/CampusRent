@@ -1,134 +1,194 @@
-// src/pages/MyItems.jsx
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Plus, Edit2, Trash2, Box } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import itemService from '../services/item.service';
+import * as walletService from '../services/wallet.service';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
+import Sidebar from '../components/common/Sidebar';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 const UPLOADS_URL = API_URL.replace('/api', '');
 
 const MyItems = () => {
-  const { user } = useAuth();
-  const [items, setItems] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+ const { user } = useAuth();
+ const navigate = useNavigate();
+ const [items, setItems] = useState([]);
+ const [walletInfo, setWalletInfo] = useState({ saldo: 0 });
+ const [isLoading, setIsLoading] = useState(true);
 
-  const fetchMyItems = async () => {
-    setIsLoading(true);
-    try {
-      const res = await itemService.getItems({ ownerId: user.id });
-      setItems(res.data || []);
-    } catch (err) {
-      toast.error('Gagal memuat barang kamu');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+ const fetchData = useCallback(async () => {
+  setIsLoading(true);
+  try {
+   const [itemsRes, walletRes] = await Promise.all([
+    itemService.getItems({ ownerId: user.id }),
+    walletService.getWalletInfo()
+   ]);
+   setItems(itemsRes.data || []);
+   setWalletInfo(walletRes.data || { saldo: 0 });
+  } catch (err) {
+   console.error(err);
+   toast.error('Gagal memuat data barang');
+  } finally {
+   setIsLoading(false);
+  }
+ }, [user.id]);
 
-  useEffect(() => {
-    fetchMyItems();
-  }, [user.id]);
+ useEffect(() => {
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  fetchData();
+ }, [fetchData]);
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Yakin ingin menghapus barang ini?')) return;
-    try {
-      await itemService.deleteItem(id);
-      toast.success('Barang berhasil dihapus');
-      fetchMyItems();
-    } catch (err) {
-      toast.error('Gagal menghapus barang');
-    }
-  };
+ const handleDelete = async (id) => {
+  if (!window.confirm('Yakin ingin menghapus barang ini?')) return;
+  try {
+   await itemService.deleteItem(id);
+   toast.success('Barang berhasil dihapus');
+   fetchData();
+  } catch (error) {
+   console.error(error);
+   toast.error('Gagal menghapus barang');
+  }
+ };
 
-  return (
-    <div className="bg-gray-50 dark:bg-slate-900 min-h-screen py-10">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-slate-100 mb-2">Barang Saya</h1>
-            <p className="text-gray-500 dark:text-slate-400">Kelola barang yang kamu sewakan/pinjamkan.</p>
-          </div>
-          <Link to="/my-items/create" className="btn-primary py-2.5 px-6 flex items-center gap-2">
-            <Plus size={18} />
-            Tambah Barang
-          </Link>
-        </div>
+ const countTersedia = items.filter(i => i.statusBarang === 'TERSEDIA').length;
+ const countDipinjam = items.filter(i => i.statusBarang !== 'TERSEDIA').length;
 
-        {isLoading ? (
-          <div className="flex justify-center py-20">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
-          </div>
-        ) : items.length === 0 ? (
-          <div className="text-center py-20 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700">
-            <div className="w-16 h-16 bg-blue-50 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Box className="text-blue-500 dark:text-blue-400" size={24} />
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">Belum ada barang</h3>
-            <p className="text-gray-500 dark:text-slate-400 mt-1 text-sm mb-6">Mulai tambahkan barang pertamamu untuk disewakan.</p>
-            <Link to="/my-items/create" className="btn-secondary py-2 px-5 inline-flex">Tambah Barang</Link>
-          </div>
-        ) : (
-          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-gray-50 dark:bg-slate-900/50 text-gray-500 dark:text-slate-400 text-xs uppercase tracking-wider">
-                    <th className="p-4 font-semibold">Barang</th>
-                    <th className="p-4 font-semibold">Kategori</th>
-                    <th className="p-4 font-semibold">Status</th>
-                    <th className="p-4 font-semibold text-right">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-slate-700 text-sm">
-                  {items.map(item => (
-                    <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors">
-                      <td className="p-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-slate-700 overflow-hidden flex-shrink-0">
-                            {item.fotoBarang ? (
-                              <img src={`${UPLOADS_URL}${item.fotoBarang.split(',')[0]}`} alt={item.namaBarang} className="w-full h-full object-cover" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-gray-400 dark:text-slate-500"><Box size={16} /></div>
-                            )}
-                          </div>
-                          <div>
-                            <Link to={`/items/${item.id}`} className="font-semibold text-gray-900 dark:text-slate-100 hover:text-blue-600 truncate max-w-[200px] block" title={item.namaBarang}>
-                              {item.namaBarang}
-                            </Link>
-                            <p className="text-gray-500 dark:text-slate-400 text-xs mt-0.5">Rp {item.hargaSewa.toLocaleString('id-ID')}/hari</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="p-4 text-gray-600 dark:text-slate-300">{item.kategori.replace('_', ' ')}</td>
-                      <td className="p-4">
-                        {item.statusBarang === 'TERSEDIA' ? (
-                          <span className="px-2.5 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-semibold rounded-lg shadow-sm">Tersedia</span>
-                        ) : (
-                          <span className="px-2.5 py-1 bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 text-xs font-semibold rounded-lg shadow-sm">{item.statusBarang}</span>
-                        )}
-                      </td>
-                      <td className="p-4">
-                        <div className="flex items-center justify-end gap-2">
-                          <Link to={`/my-items/edit/${item.id}`} className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors">
-                            <Edit2 size={16} />
-                          </Link>
-                          <button onClick={() => handleDelete(item.id)} className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors">
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
+ return (
+  <div className="bg-surface font-body-md text-on-surface min-h-screen flex flex-col dot-pattern">
+   <main className="flex-grow max-w-container-max mx-auto w-full px-margin-mobile md:px-gutter py-stack-xl flex flex-col md:flex-row gap-gutter">
+    
+    <Sidebar activeTab="my-items" />
+
+    {/* Main Content Canvas */}
+    <div className="flex-1 flex flex-col gap-stack-xl min-w-0">
+     {/* Hero/Header Section */}
+     <div className="flex flex-col md:flex-row md:items-center justify-between gap-stack-md">
+      <div>
+       <h1 className="font-headline-lg text-headline-lg text-on-surface">Kelola Barang Saya</h1>
+       <p className="text-body-md text-on-surface-variant mt-2">Pantau, tambah, dan optimalkan barang sewaan Anda di sini.</p>
       </div>
+      <button 
+       onClick={() => {
+        if (!user.isVerified) {
+         toast.error('Harap unggah KTM di profil Anda dan tunggu verifikasi untuk menambah barang');
+        } else {
+         navigate('/my-items/create');
+        }
+       }}
+       className="flex items-center justify-center gap-2 px-6 py-3 bg-primary text-on-primary rounded-full font-bold shadow-lg hover:scale-105 transition-transform"
+      >
+       <span className="material-symbols-outlined">add</span>
+       <span>Tambah Barang Baru</span>
+      </button>
+     </div>
+
+     {/* Statistics Row */}
+     <div className="grid grid-cols-2 lg:grid-cols-4 gap-stack-md">
+      <div className="glass-panel shadow-sm p-stack-md rounded-xl border border-outline-variant/20 hover:-translate-y-1 transition-transform">
+       <p className="text-label-sm text-on-surface-variant">Total Barang</p>
+       <h3 className="font-headline-lg text-headline-lg text-primary">{items.length}</h3>
+       <div className="flex items-center gap-1 text-secondary text-[10px] mt-1 font-semibold">
+        <span className="material-symbols-outlined text-[14px]">inventory_2</span> Koleksi Anda
+       </div>
+      </div>
+      <div className="glass-panel shadow-sm p-stack-md rounded-xl border border-outline-variant/20 hover:-translate-y-1 transition-transform">
+       <p className="text-label-sm text-on-surface-variant">Tersedia</p>
+       <h3 className="font-headline-lg text-headline-lg text-secondary">{countTersedia}</h3>
+       <p className="text-[10px] text-on-surface-variant mt-1 font-semibold">Siap dipinjam</p>
+      </div>
+      <div className="glass-panel shadow-sm p-stack-md rounded-xl border border-outline-variant/20 hover:-translate-y-1 transition-transform">
+       <p className="text-label-sm text-on-surface-variant">Sedang Dipinjam</p>
+       <h3 className="font-headline-lg text-headline-lg text-tertiary">{countDipinjam}</h3>
+       <p className="text-[10px] text-on-surface-variant mt-1 font-semibold">Dalam transaksi aktif</p>
+      </div>
+      <div className="glass-panel shadow-sm p-stack-md rounded-xl border border-outline-variant/20 hover:-translate-y-1 transition-transform">
+       <p className="text-label-sm text-on-surface-variant">Saldo Tersedia</p>
+       <h3 className="font-title-md text-title-md text-on-surface mt-2 font-bold">Rp {walletInfo.saldo.toLocaleString('id-ID')}</h3>
+       <div className="flex items-center gap-1 text-secondary text-[10px] mt-2 font-semibold">
+        <span className="material-symbols-outlined text-[14px]">payments</span> Siap ditarik
+       </div>
+      </div>
+     </div>
+
+     {isLoading ? (
+      <div className="flex justify-center py-20">
+       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+     ) : items.length === 0 ? (
+      <div className="glass-panel p-10 rounded-xl shadow-sm border border-outline-variant/30 flex flex-col items-center justify-center text-center">
+       <div className="w-20 h-20 bg-surface-container-highest rounded-full flex items-center justify-center text-on-surface-variant opacity-50 mb-4">
+        <span className="material-symbols-outlined text-[40px]">inventory_2</span>
+       </div>
+       <h3 className="font-title-md text-[20px] text-on-surface mb-2 font-semibold">Belum ada barang</h3>
+       <p className="font-body-md text-on-surface-variant mb-6 max-w-sm">Mulai tambahkan barang pertamamu untuk disewakan dan dapatkan penghasilan.</p>
+       <button 
+        onClick={() => {
+         if (!user.isVerified) {
+          toast.error('Harap unggah KTM di profil Anda dan tunggu verifikasi untuk menambah barang');
+         } else {
+          navigate('/my-items/create');
+         }
+        }}
+        className="bg-primary text-on-primary px-6 py-3 rounded-full font-label-md text-[14px] shadow-lg hover:shadow-primary/30 hover:-translate-y-1 transition-all font-semibold"
+       >
+        Tambah Barang Baru
+       </button>
+      </div>
+     ) : (
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-gutter">
+       {items.map(item => (
+        <div key={item.id} className="glass-panel shadow-sm rounded-xl overflow-hidden border border-outline-variant/20 group hover:-translate-y-1 transition-all flex flex-col">
+         <div className="relative h-48 overflow-hidden bg-surface-container-high shrink-0">
+          {item.fotoBarang ? (
+           <img 
+            src={`${UPLOADS_URL}${item.fotoBarang.split(',')[0]}`} 
+            alt={item.namaBarang} 
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+           />
+          ) : (
+           <div className="w-full h-full flex items-center justify-center text-on-surface-variant opacity-50">
+            <span className="material-symbols-outlined text-[40px]">image</span>
+           </div>
+          )}
+          
+          <span className={`absolute top-3 left-3 px-3 py-1 rounded-full text-label-sm font-bold shadow-sm ${item.statusBarang === 'TERSEDIA' ? 'bg-secondary-container text-on-secondary-container' : 'bg-tertiary-fixed text-on-tertiary-fixed-variant'}`}>
+           {item.statusBarang === 'TERSEDIA' ? 'Tersedia' : 'Dipinjam'}
+          </span>
+         </div>
+         
+         <div className="p-stack-md flex flex-col gap-stack-sm flex-grow">
+          <div className="flex justify-between items-start gap-2">
+           <Link to={`/items/${item.id}`} className="font-title-md text-title-md text-on-surface line-clamp-1 hover:text-primary transition-colors">
+            {item.namaBarang}
+           </Link>
+           <span className="text-primary font-bold whitespace-nowrap">
+            Rp {item.hargaSewa.toLocaleString('id-ID')}
+            <span className="text-[10px] font-normal text-on-surface-variant">/hari</span>
+           </span>
+          </div>
+          
+          <div className="flex items-center gap-2">
+           <span className="material-symbols-outlined text-tertiary text-[16px]" style={{fontVariationSettings: "'FILL' 1"}}>star</span>
+           <span className="text-label-sm text-on-surface-variant">0 (Belum ada ulasan)</span>
+          </div>
+          
+          <div className="flex gap-2 pt-stack-xs mt-auto">
+           <Link to={`/my-items/edit/${item.id}`} className="flex-1 py-2 flex justify-center items-center bg-surface-container-high hover:bg-primary/10 text-primary rounded-lg font-bold text-label-sm transition-colors">
+            Edit
+           </Link>
+           <button onClick={() => handleDelete(item.id)} className="p-2 border border-outline-variant hover:bg-error/10 text-error rounded-lg transition-colors flex justify-center items-center" title="Hapus Barang">
+            <span className="material-symbols-outlined text-[20px]">delete</span>
+           </button>
+          </div>
+         </div>
+        </div>
+       ))}
+      </div>
+     )}
     </div>
-  );
+   </main>
+  </div>
+ );
 };
 
 export default MyItems;
